@@ -1,0 +1,75 @@
+p2nprobe
+
+# Compiled object files
+*.o
+*.obj
+*.lo
+*.slo
+
+# Compiled dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Compiled static libraries
+*.a
+*.lib
+
+# Executable files
+*.out
+*.exe
+
+# Build directories
+/build/
+/bin/
+/lib/
+/dist/
+
+# CMake specific
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+
+# Make specific
+makefile
+
+# IDE-specific directories and files (e.g., for CLion, Visual Studio Code)
+.idea/
+.vscode/
+*.code-workspace
+
+# Editor backup files
+*~
+*.swp
+*.swo
+*.swn
+*.bak
+*.tmp
+*.log
+
+# Debug files
+*.gch
+*.pch
+
+# Coverage and profiling reports
+*.gcno
+*.gcda
+*.gcov
+
+# Archives
+*.tar
+*.gz
+*.zip
+*.7z
+*.bz2
+
+# Dependency directories for package managers
+/deps/
+/vendor/
+
+# Generated documentation
+/*.html
+
+# Other temporary files
+.DS_Store
+*.lock
