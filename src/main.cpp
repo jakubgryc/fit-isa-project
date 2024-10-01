@@ -1,6 +1,11 @@
+#include <cstdlib>  // For atoi
 #include <iostream>
 #include <string>
-#include <cstdlib> // For atoi
+#include <arpa/inet.h>
+
+
+
+
 
 int main(int argc, char *argv[]) {
     // Check if the mandatory arguments <host>:<port> and <pcap_file_path> are provided
@@ -8,6 +13,8 @@ int main(int argc, char *argv[]) {
         std::cerr << "Usage: ./p2nprobe <host>:<port> <pcap_file_path> [-a <active_timeout> -i <inactive_timeout>]\n";
         return 1;
     }
+
+
 
     // Mandatory arguments
     std::string host_port = argv[1];
@@ -21,9 +28,9 @@ int main(int argc, char *argv[]) {
     for (int i = 3; i < argc; i++) {
         std::string arg = argv[i];
         if (arg == "-a" && i + 1 < argc) {
-            active_timeout = std::atoi(argv[++i]); // Convert the next argument to an integer
+            active_timeout = std::atoi(argv[++i]);  // Convert the next argument to an integer
         } else if (arg == "-i" && i + 1 < argc) {
-            inactive_timeout = std::atoi(argv[++i]); // Convert the next argument to an integer
+            inactive_timeout = std::atoi(argv[++i]);  // Convert the next argument to an integer
         }
     }
 
@@ -32,6 +39,10 @@ int main(int argc, char *argv[]) {
     std::cout << "PCAP File Path: " << pcap_file_path << "\n";
     std::cout << "Active Timeout: " << active_timeout << " seconds\n";
     std::cout << "Inactive Timeout: " << inactive_timeout << " seconds\n";
+
+
+    std::cout << "testing some shit for wakatime, is it loaded correctly?" << std::endl;
+
 
     // Proceed with the rest of the program logic using the parsed arguments
     return 0;
