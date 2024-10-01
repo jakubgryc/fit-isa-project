@@ -1,49 +1,96 @@
+/**
+ * @file main.cpp
+ * @brief Main function for the Netflow v5 exporter assignment
+ */
+
+#include <arpa/inet.h>
+
 #include <cstdlib>  // For atoi
 #include <iostream>
 #include <string>
-#include <arpa/inet.h>
 
+#include "../include/Flow.h"
 
-
-
-
-int main(int argc, char *argv[]) {
-    // Check if the mandatory arguments <host>:<port> and <pcap_file_path> are provided
-    if (argc < 3) {
-        std::cerr << "Usage: ./p2nprobe <host>:<port> <pcap_file_path> [-a <active_timeout> -i <inactive_timeout>]\n";
-        return 1;
-    }
-
-
-
-    // Mandatory arguments
-    std::string host_port = argv[1];
-    std::string pcap_file_path = argv[2];
-
-    // Default values for optional parameters
+struct Arguments {
+    std::string hostname;
+    std::string port;
+    std::string pcap_file;
     int active_timeout = 60;
     int inactive_timeout = 60;
+};
 
-    // Parse optional arguments (-a and -i)
-    for (int i = 3; i < argc; i++) {
-        std::string arg = argv[i];
-        if (arg == "-a" && i + 1 < argc) {
-            active_timeout = std::atoi(argv[++i]);  // Convert the next argument to an integer
-        } else if (arg == "-i" && i + 1 < argc) {
-            inactive_timeout = std::atoi(argv[++i]);  // Convert the next argument to an integer
+/**
+ * @brief Error printing function
+ */
+void print_err() {
+    std::cerr << "Usage: ./p2nprobe <host>:<port> <pcap_file_path> [-a <active_timeout> -i <inactive_timeout>]\n";
+}
+
+/**
+ * @brief Helper function to correctly parse program arguments
+ *
+ * @param argc 
+ * @param argv 
+ * @param args Argument structure to hold the argument information
+ * @return 
+ */
+bool parse_arguments(int argc, char *argv[], Arguments *args) {
+    //
+    // Check if the mandatory arguments <host>:<port> and <pcap_file_path> are provided
+    if (argc < 3) {
+        return false;
+    }
+
+    bool parsed_hostname = false;
+    bool parsed_pcap_file = false;
+    int timeout = 60;
+    std::string current_arg;
+
+    for (int i = 1; i < argc; i++) {
+        current_arg = argv[i];
+
+        size_t colonPos = current_arg.find(':');
+        if (colonPos != std::string::npos) {
+            args->hostname = current_arg.substr(0, colonPos);
+            args->port = current_arg.substr(colonPos + 1);
+            parsed_hostname = true;
+
+        } else if (current_arg == "-a" || current_arg == "-i") {
+            if (argv[++i] != NULL) {
+                try {
+                    timeout = std::stoi(argv[i]);
+                } catch (std::invalid_argument const &ex) {
+                    // Catch error if the given timeout is not a number
+                    std::cerr << "No timeout given\n";
+                    return false;
+                }
+                current_arg == "-a" ? args->active_timeout = timeout : args->inactive_timeout = timeout;
+            } else {
+                return false;
+            }
+        } else {
+            args->pcap_file = current_arg;
+            parsed_pcap_file = true;
         }
     }
 
-    // Output the parsed values
-    std::cout << "Host:Port: " << host_port << "\n";
-    std::cout << "PCAP File Path: " << pcap_file_path << "\n";
-    std::cout << "Active Timeout: " << active_timeout << " seconds\n";
-    std::cout << "Inactive Timeout: " << inactive_timeout << " seconds\n";
+    if (!parsed_hostname || !parsed_pcap_file) return false;
 
+    return true;
+}
 
-    std::cout << "testing some shit for wakatime, is it loaded correctly?" << std::endl;
+int main(int argc, char *argv[]) {
+    Arguments args;
+    if (!parse_arguments(argc, argv, &args)) {
+        print_err();
+        return EXIT_FAILURE;
+    }
 
+    std::cout << "hostname is: " << args.hostname << std::endl;
+    std::cout << "port is: " << args.port << std::endl;
+    std::cout << "PCAP FILE is: " << args.pcap_file << std::endl;
+    std::cout << "active_timeout is: " << args.active_timeout << std::endl;
+    std::cout << "inactive_timeout is: " << args.inactive_timeout << std::endl;
 
-    // Proceed with the rest of the program logic using the parsed arguments
     return 0;
 }
