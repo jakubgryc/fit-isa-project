@@ -5,6 +5,7 @@ p2nprobe
 *.obj
 *.lo
 *.slo
+.wakatime-project
 
 # Compiled dynamic libraries
 *.so
