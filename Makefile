@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -std=gnu++17 -Wall -Wextra -pedantic
+CXXFLAGS = -std=gnu++17 -Wall -Wextra -pedantic -g
 
 SRC_DIR = src
 OBJ_DIR = obj
