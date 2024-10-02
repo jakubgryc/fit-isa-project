@@ -17,7 +17,7 @@ UDPConnection::UDPConnection(const std::string hostname, int port) : hostname(ho
 UDPConnection::~UDPConnection() {
     if (sockfd != -1) {
         close(sockfd);
-        std::cout << "Closed?\n";
+        std::cout << "Socket closed\n";
     }
 }
 
@@ -59,11 +59,14 @@ bool UDPConnection::connect() {
 }
 
 bool UDPConnection::send_flow(const char *data) {
+    static int mess_sent = 0;
     ssize_t bytes_tx =
         sendto(sockfd, data, strlen(data), 0, (struct sockaddr *)(&server_address), sizeof(server_address));
-    std::cout << "Sending: " << data;
     if (bytes_tx < 0) {
         std::cerr << "error: failed to send data\n";
+    } else {
+        mess_sent++;
+        std::cout << "(" << mess_sent << ") Sending: " << data;
     }
     return true;
 }

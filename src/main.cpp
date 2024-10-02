@@ -88,16 +88,16 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
-    UDPConnection connection(args.hostname, args.port);
+    UDPConnection *connection = new UDPConnection(args.hostname, args.port);
 
-    if (!connection.connect()) {
+    if (!connection->connect()) {
         std::cerr << "Unable to connect to: " << args.hostname << ":" << args.port << std::endl;
         // delete connection;
         return EXIT_FAILURE;
     }
 
-    for (int i = 0; i < 5; i++) {
-        connection.send_flow("NEJAKA DATA\n");
+    for (int i = 0; i < 7; i++) {
+        connection->send_flow("NEJAKA DATA\n");
     }
 
     // connection->printData();
@@ -110,7 +110,7 @@ int main(int argc, char *argv[]) {
     // std::cout << "inactive_timeout is: " << args.inactive_timeout << std::endl;
     // std::cout << "---------------------" << std::endl;
 
-    // delete connection;
+    delete connection;
 
     return 0;
 }
