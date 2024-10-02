@@ -27,5 +27,8 @@ $(OBJ_DIR):
 clean:
 	rm -f $(OBJ_DIR)/*.o $(TARGET)
 
+test:
+	python tests/udp_server.py
+
 
 .PHONY: all clean
