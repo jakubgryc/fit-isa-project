@@ -4,16 +4,18 @@
  */
 
 #include <arpa/inet.h>
+#include <sys/socket.h>
 
 #include <cstdlib>  // For atoi
 #include <iostream>
 #include <string>
 
 #include "../include/Flow.h"
+#include "../include/UDPConnection.h"
 
 struct Arguments {
     std::string hostname;
-    std::string port;
+    int port;
     std::string pcap_file;
     int active_timeout = 60;
     int inactive_timeout = 60;
@@ -29,10 +31,10 @@ void print_err() {
 /**
  * @brief Helper function to correctly parse program arguments
  *
- * @param argc 
- * @param argv 
+ * @param argc
+ * @param argv
  * @param args Argument structure to hold the argument information
- * @return 
+ * @return
  */
 bool parse_arguments(int argc, char *argv[], Arguments *args) {
     //
@@ -52,7 +54,7 @@ bool parse_arguments(int argc, char *argv[], Arguments *args) {
         size_t colonPos = current_arg.find(':');
         if (colonPos != std::string::npos) {
             args->hostname = current_arg.substr(0, colonPos);
-            args->port = current_arg.substr(colonPos + 1);
+            args->port = stoi(current_arg.substr(colonPos + 1));
             parsed_hostname = true;
 
         } else if (current_arg == "-a" || current_arg == "-i") {
@@ -86,11 +88,29 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
-    std::cout << "hostname is: " << args.hostname << std::endl;
-    std::cout << "port is: " << args.port << std::endl;
-    std::cout << "PCAP FILE is: " << args.pcap_file << std::endl;
-    std::cout << "active_timeout is: " << args.active_timeout << std::endl;
-    std::cout << "inactive_timeout is: " << args.inactive_timeout << std::endl;
+    UDPConnection connection(args.hostname, args.port);
+
+    if (!connection.connect()) {
+        std::cerr << "Unable to connect to: " << args.hostname << ":" << args.port << std::endl;
+        // delete connection;
+        return EXIT_FAILURE;
+    }
+
+    for (int i = 0; i < 5; i++) {
+        connection.send_flow("NEJAKA DATA\n");
+    }
+
+    // connection->printData();
+
+    // std::cout << "---------------------" << std::endl;
+    // std::cout << "hostname is: |" << args.hostname << "|\n";
+    // std::cout << "port is: |" << args.port << "|\n";
+    // std::cout << "PCAP FILE is: " << args.pcap_file << std::endl;
+    // std::cout << "active_timeout is: " << args.active_timeout << std::endl;
+    // std::cout << "inactive_timeout is: " << args.inactive_timeout << std::endl;
+    // std::cout << "---------------------" << std::endl;
+
+    // delete connection;
 
     return 0;
 }
