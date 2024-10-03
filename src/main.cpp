@@ -12,6 +12,7 @@
 
 #include "../include/Flow.h"
 #include "../include/UDPConnection.h"
+#include "../include/PcapHandler.h"
 
 struct Arguments {
     std::string hostname;
@@ -100,12 +101,17 @@ int main(int argc, char *argv[]) {
         connection->send_flow("NEJAKA DATA\n");
     }
 
+    PcapHandler pcap_handler(args.pcap_file);
+
+    pcap_handler.openPcap();
+    pcap_handler.start();
+
     // connection->printData();
 
     // std::cout << "---------------------" << std::endl;
     // std::cout << "hostname is: |" << args.hostname << "|\n";
     // std::cout << "port is: |" << args.port << "|\n";
-    // std::cout << "PCAP FILE is: " << args.pcap_file << std::endl;
+    std::cout << "PCAP FILE is: " << args.pcap_file << std::endl;
     // std::cout << "active_timeout is: " << args.active_timeout << std::endl;
     // std::cout << "inactive_timeout is: " << args.inactive_timeout << std::endl;
     // std::cout << "---------------------" << std::endl;
