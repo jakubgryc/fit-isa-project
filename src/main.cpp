@@ -97,9 +97,9 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
-    for (int i = 0; i < 7; i++) {
-        connection->send_flow("NEJAKA DATA\n");
-    }
+    // for (int i = 0; i < 7; i++) {
+    //     connection->send_flow("NEJAKA DATA\n");
+    // }
 
     PcapHandler pcap_handler(args.pcap_file);
 
