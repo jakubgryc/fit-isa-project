@@ -10,6 +10,8 @@
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 
+#include <cstring>
+
 /**
  * @brief PcapHandler constructor
  *
@@ -61,11 +63,13 @@ void PcapHandler::proccessPacket(const struct pcap_pkthdr *header, const u_char 
 
         unsigned int ip_len = ip_header->ip_hl;
 
+        char srcIP[INET_ADDRSTRLEN];
+        char destIP[INET_ADDRSTRLEN];
         if (ip_header->ip_p == IPPROTO_TCP) {
-            char srcIP[INET_ADDRSTRLEN];
-            char destIP[INET_ADDRSTRLEN];
+            memset(srcIP, 0, INET_ADDRSTRLEN);
+            memset(destIP, 0, INET_ADDRSTRLEN);
             inet_ntop(AF_INET, &(ip_header->ip_src), srcIP, INET_ADDRSTRLEN);
-            inet_ntop(AF_INET, &(ip_header->ip_src), destIP, INET_ADDRSTRLEN);
+            inet_ntop(AF_INET, &(ip_header->ip_dst), destIP, INET_ADDRSTRLEN);
 
             const struct tcphdr *tcp_header = (struct tcphdr *)(packet + sizeof(struct ether_header) + ip_len * 4);
 
@@ -73,8 +77,8 @@ void PcapHandler::proccessPacket(const struct pcap_pkthdr *header, const u_char 
             uint16_t destPort = ntohs(tcp_header->dest);
 
             std::cout << "Packet no.: " << packet_id << std::endl;
-            std::cout <<  srcIP << ":" << srcPort << std::endl;
-            std::cout <<  destIP << ":" << destPort << std::endl;
+            std::cout << srcIP << ":" << srcPort << " --->  ";
+            std::cout << destIP << ":" << destPort << std::endl;
             std::cout << "\n";
             packet_id++;
         }
