@@ -6,7 +6,7 @@
 
 #include "../include/Flow.h"
 
-Flow::Flow(std::string srcIP, std::string destIP, uint16_t srcPort, uint16_t destPort, uint8_t protocol)
+Flow::Flow(uint32_t srcIP, uint32_t destIP, uint16_t srcPort, uint16_t destPort, uint8_t protocol)
     : srcIP(srcIP),
       destIP(destIP),
       srcPort(srcPort),
