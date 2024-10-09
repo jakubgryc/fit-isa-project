@@ -16,7 +16,7 @@ void FlowCache::updateFlow(const Flow &flow, uint32_t packetSize) {
         flowCache[flowKey]->update(packetSize, std::time(nullptr));
     } else {
         // Flow is already in flowcache, update its information
-        std::cout << "Flow exists, UPDATING\n";
+        // std::cout << "Flow exists, UPDATING\n";
         it->second->update(packetSize, flow.lastSeenTime);
     }
 
@@ -32,7 +32,10 @@ void FlowCache::print() {
     int cnt = 1;
 
     uint32_t totalBytes = 0;
+    uint32_t totalPackets = 0;
 
+    std::cout << "\n-----------------FLOW DATA------------------\n";
+    std::cout << "             SRCIP:SRCPORT -> DSTIP:DSTPORT    BYTES\n" ;
     for (auto it = flowCache.begin(); it != flowCache.end(); it++) {
         struct in_addr ip_addrSRC;
         struct in_addr ip_addrDEST;
@@ -44,14 +47,17 @@ void FlowCache::print() {
         ip_addrDEST.s_addr = it->second->destIP;
 
         char *srcIP = inet_ntoa(ip_addrSRC);
-        char *destIP = inet_ntoa(ip_addrSRC);
+        char *destIP = inet_ntoa(ip_addrDEST);
 
         uint32_t byteCount = it->second->byteCount;
+        uint32_t packetCount = it->second->packetCount;
         std::cout << "Flow no: " << cnt << ":  ";
-        std::cout << srcIP << ":" << srcPort << "->" << destIP << ":" << destPort << "    " << byteCount << std::endl;
+        std::cout << srcIP << ":" << srcPort << " -> " << destIP << ":" << destPort << "    " << byteCount << std::endl;
         cnt++;
         totalBytes += byteCount;
+        totalPackets += packetCount;
     }
 
-    std::cout << "Total bytes: " << totalBytes << std::endl;
+    std::cout << "Total packets: " << totalPackets << std::endl;
+    std::cout << "Total bytes:   " << totalBytes << std::endl;
 }
