@@ -32,7 +32,7 @@ class PcapHandler {
     void start(UDPConnection *connection);
 
    private:
-    int proccessPacket(const struct pcap_pkthdr *header, const u_char *packet, FlowCache &flowCache);
+    void proccessPacket(const struct pcap_pkthdr *header, const u_char *packet, FlowCache &flowCache);
 
     std::string filePath;
     pcap_t *handle;

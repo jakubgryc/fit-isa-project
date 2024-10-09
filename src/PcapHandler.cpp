@@ -52,20 +52,17 @@ void PcapHandler::start(UDPConnection *connection) {
     const u_char *packet;
     struct pcap_pkthdr header;
 
-    int count;
     while ((packet = pcap_next(handle, &header)) != nullptr) {
-        count = proccessPacket(&header, packet, flowCache);
+        proccessPacket(&header, packet, flowCache);
     }
 
 
 
     flowCache.print();
 
-    std::cout << "Packet count is: " << count << std::endl;
-    std::cout << "size of flowCache is: " << sizeof(flowCache) << std::endl;
 }
 
-int PcapHandler::proccessPacket(const struct pcap_pkthdr *header, const u_char *packet, FlowCache &flowCache) {
+void PcapHandler::proccessPacket(const struct pcap_pkthdr *header, const u_char *packet, FlowCache &flowCache) {
     static int packet_id = 0;
 
     const struct ether_header *eth_header = (struct ether_header *)packet;
@@ -74,7 +71,7 @@ int PcapHandler::proccessPacket(const struct pcap_pkthdr *header, const u_char *
         const struct ip *ip_header = (struct ip *)(packet + sizeof(struct ether_header));
 
         unsigned int ip_len = ip_header->ip_hl * 4;
-        uint32_t byteCount = 0;
+        uint32_t payloadSize = 0;
 
         // char srcIP[INET_ADDRSTRLEN];
         // char destIP[INET_ADDRSTRLEN];
@@ -84,8 +81,7 @@ int PcapHandler::proccessPacket(const struct pcap_pkthdr *header, const u_char *
         if (ip_header->ip_p == IPPROTO_TCP) {
             const struct tcphdr *tcp_header = (struct tcphdr *)(packet + sizeof(struct ether_header) + ip_len);
 
-            uint32_t tcp_len = sizeof(*tcp_header);
-            byteCount = header->len - sizeof(struct ether_header);
+            payloadSize = header->len - sizeof(struct ether_header);
             // memset(srcIP, 0, INET_ADDRSTRLEN);
             //
             // memset(destIP, 0, INET_ADDRSTRLEN);
@@ -107,11 +103,10 @@ int PcapHandler::proccessPacket(const struct pcap_pkthdr *header, const u_char *
             uint16_t srcPort = tcp_header->source;
             uint16_t destPort = tcp_header->dest;
 
-            Flow flow(srcIP, destIP, srcPort, destPort, IPPROTO_TCP);
+            Flow flow(srcIP, destIP, srcPort, destPort);
 
-            flowCache.updateFlow(flow, byteCount);
+            flowCache.updateFlow(flow, payloadSize);
         }
     }
 
-    return packet_id;
 }
