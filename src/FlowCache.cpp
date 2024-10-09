@@ -35,11 +35,10 @@ void FlowCache::print() {
     uint32_t totalPackets = 0;
 
     std::cout << "\n-----------------FLOW DATA------------------\n";
-    std::cout << "             SRCIP:SRCPORT -> DSTIP:DSTPORT    BYTES\n" ;
+    std::cout << "             SRCIP:SRCPORT -> DSTIP:DSTPORT    BYTES\n";
     for (auto it = flowCache.begin(); it != flowCache.end(); it++) {
         struct in_addr ip_addrSRC;
         struct in_addr ip_addrDEST;
-
         uint16_t srcPort = ntohs(it->second->srcPort);
         uint16_t destPort = ntohs(it->second->destPort);
 
