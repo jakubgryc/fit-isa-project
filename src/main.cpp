@@ -104,7 +104,7 @@ int main(int argc, char *argv[]) {
     PcapHandler pcap_handler(args.pcap_file);
 
     pcap_handler.openPcap();
-    pcap_handler.start();
+    pcap_handler.start(connection);
 
     // connection->printData();
 
