@@ -9,12 +9,57 @@
 
 #include <cstdint>
 #include <ctime>
-#include <string>
 #include <iostream>
+#include <string>
+
+/**
+ * @class NetflowHeader
+ * @brief Structure to store Netflow v5 Header information
+ *
+ */
+struct NetflowHeader {
+    uint16_t version;
+    uint16_t flowCount;
+    uint32_t sysUptime;
+    uint32_t unix_secs;
+    uint32_t unix_nsecs;
+    uint32_t flowSequence;
+    uint8_t engine_type;
+    uint8_t engine_id;
+    uint16_t sampling_interval;
+};
+
+/**
+ * @class NetflowRecord
+ * @brief Structure to store Netflow v5 record information
+ *
+ */
+struct NetflowRecord {
+    uint32_t srcIP;
+    uint32_t destIP;
+    uint32_t nexthop;
+    uint16_t SNMPinput;
+    uint16_t SNMPoutput;
+    uint32_t totalPackets;
+    uint32_t totalBytes;
+    uint32_t firstSeen;
+    uint32_t lastSeen;
+    uint16_t srcPort;
+    uint16_t destPort;
+    uint8_t pad1;
+    uint8_t TCPflags;
+    uint8_t protocol;
+    uint8_t tos;
+    uint16_t srcAS;
+    uint16_t destAS;
+    uint8_t srcMask;
+    uint8_t destMask;
+    uint16_t pad2;
+};
 
 /**
  * @class Flow
- * @brief Class representing single TCP Flow 
+ * @brief Class representing single TCP Flow
  *
  * The class implementation stores and updates the state of each individual
  * network flow. Stores source and destination IP addresses, ports and byte/packet counts.
@@ -30,7 +75,7 @@ class Flow {
     /**
      * @brief Constructor for a Flow class
      *
-     * @param srcIP Source IP address 
+     * @param srcIP Source IP address
      * @param destIP Destination IP address
      * @param srcPort Source port number
      * @param destPort Destination port number
