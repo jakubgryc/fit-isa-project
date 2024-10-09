@@ -24,7 +24,6 @@ class Flow {
    public:
     uint32_t srcIP, destIP;
     uint16_t srcPort, destPort;
-    uint8_t protocol;
     uint32_t packetCount, byteCount;
     std::time_t startTime, lastSeenTime;
 
@@ -37,7 +36,7 @@ class Flow {
      * @param destPort Destination port number
      * @param protocol Protocol
      */
-    Flow(uint32_t srcIP, uint32_t destIP, uint16_t srcPort, uint16_t destPort, uint8_t protocol);
+    Flow(uint32_t srcIP, uint32_t destIP, uint16_t srcPort, uint16_t destPort);
 
     /**
      * @brief Function to update the flow statistics
