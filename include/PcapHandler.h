@@ -11,11 +11,15 @@
 #include <net/ethernet.h>
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
-#include <pcap/pcap.h>
 #include <pcap.h>
+#include <pcap/pcap.h>
 
 #include <iostream>
 #include <string>
+
+#include "Flow.h"
+#include "FlowCache.h"
+#include "UDPConnection.h"
 
 class PcapHandler {
    public:
@@ -25,10 +29,10 @@ class PcapHandler {
 
     bool openPcap();
 
-    void start();
+    void start(UDPConnection *connection);
 
    private:
-    void proccessPacket(const struct pcap_pkthdr *header, const u_char *packet);
+    int proccessPacket(const struct pcap_pkthdr *header, const u_char *packet, FlowCache &flowCache);
 
     std::string filePath;
     pcap_t *handle;
