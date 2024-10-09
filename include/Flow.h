@@ -10,6 +10,7 @@
 #include <cstdint>
 #include <ctime>
 #include <string>
+#include <iostream>
 
 /**
  * @class Flow
@@ -24,7 +25,7 @@ class Flow {
     uint32_t srcIP, destIP;
     uint16_t srcPort, destPort;
     uint8_t protocol;
-    uint64_t packetCount, byteCount;
+    uint32_t packetCount, byteCount;
     std::time_t startTime, lastSeenTime;
 
     /**
@@ -44,7 +45,7 @@ class Flow {
      * @param packetSize Packet size to be added to the flow
      * @param timestamp Current timestamp of the captured packet
      */
-    void update(uint64_t packetSize, std::time_t timestamp);
+    void update(uint32_t packetSize, std::time_t timestamp);
 
     /**
      * @brief Function to determine if the flow is inactive
