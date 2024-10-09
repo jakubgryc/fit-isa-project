@@ -21,6 +21,11 @@
 #include "FlowCache.h"
 #include "UDPConnection.h"
 
+/**
+ * @class PcapHandler
+ * @brief PcapHandler class
+ *
+ */
 class PcapHandler {
    public:
     PcapHandler(std::string &pcapFile);
