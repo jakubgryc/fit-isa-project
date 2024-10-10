@@ -17,9 +17,17 @@
 #include <iostream>
 #include <string>
 
-#include "Flow.h"
 #include "FlowCache.h"
 #include "UDPConnection.h"
+#include "tools.h"
+
+struct PcapData {
+    uint32_t srcIP;
+    uint32_t destIP;
+    uint16_t srcPort;
+    uint16_t destPort;
+    struct timeval timeData;
+};
 
 /**
  * @class PcapHandler
@@ -34,10 +42,10 @@ class PcapHandler {
 
     bool openPcap();
 
-    void start(UDPConnection *connection);
+    void start(UDPConnection *connection, Timer &timer);
 
    private:
-    void proccessPacket(const struct pcap_pkthdr *header, const u_char *packet, FlowCache &flowCache);
+    int proccessPacket(const struct pcap_pkthdr *header, const u_char *packet, PcapData *pData);
 
     std::string filePath;
     pcap_t *handle;
