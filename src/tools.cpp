@@ -3,19 +3,19 @@
  * @brief Helper tools containing argument parsing and handling time
  */
 
-#include <iostream>
-
 #include "../include/tools.h"
 
+#include <iostream>
 
-Timer::Timer() : programStartTime(std::chrono::high_resolution_clock::now()) {}
-
+Timer::Timer(int activeTimeout, int inactiveTimeout)
+    : programStartTime(std::chrono::high_resolution_clock::now()),
+      activeTimeout(activeTimeout),
+      inactiveTimeout(inactiveTimeout) {}
 
 uint32_t Timer::timeDifference() const {
     auto currentTime = std::chrono::high_resolution_clock::now();
 
     auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - programStartTime).count();
-
 
     // Note to myself:
     // If the program runs for more than 49 days, there may be uint32 overflow.

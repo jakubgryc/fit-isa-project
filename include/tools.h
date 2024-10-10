@@ -15,11 +15,14 @@ struct Arguments {
 
 class Timer {
    public:
-    Timer();
+    Timer(int activeTimeout, int inactiveTimeout);
     uint32_t timeDifference() const;
+
 
    private:
     std::chrono::high_resolution_clock::time_point programStartTime;
+    int activeTimeout;
+    int inactiveTimeout;
 };
 
 /**
