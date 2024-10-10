@@ -70,7 +70,7 @@ class Flow {
     uint32_t srcIP, destIP;
     uint16_t srcPort, destPort;
     uint32_t packetCount, byteCount;
-    std::time_t startTime, lastSeenTime;
+    uint32_t startTime, lastSeenTime;
 
     /**
      * @brief Constructor for a Flow class
@@ -89,7 +89,7 @@ class Flow {
      * @param packetSize Packet size to be added to the flow
      * @param timestamp Current timestamp of the captured packet
      */
-    void update(uint32_t packetSize, std::time_t timestamp);
+    void update(uint32_t packetSize, uint32_t timestamp);
 
     /**
      * @brief Function to determine if the flow is inactive

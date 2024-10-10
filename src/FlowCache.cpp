@@ -13,7 +13,7 @@ void FlowCache::updateFlow(const Flow &flow, uint32_t packetSize) {
         // Flow not in flowcache, create a new one
         // std::cout << "Flow doesnt exist, CREATING NEW ONE\n";
         flowCache[flowKey] = std::make_shared<Flow>(flow);
-        flowCache[flowKey]->update(packetSize, std::time(nullptr));
+        flowCache[flowKey]->update(packetSize, 0);
     } else {
         // Flow is already in flowcache, update its information
         // std::cout << "Flow exists, UPDATING\n";
