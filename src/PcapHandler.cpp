@@ -5,13 +5,15 @@
  */
 
 #include "../include/PcapHandler.h"
-#include "../include/Flow.h"
 
 #include <net/ethernet.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 
 #include <cstring>
+
+#include "../include/Flow.h"
+#include "../include/tools.h"
 
 /**
  * @brief PcapHandler constructor
@@ -39,7 +41,7 @@ bool PcapHandler::openPcap() {
     return true;
 }
 
-void PcapHandler::start(UDPConnection *connection) {
+void PcapHandler::start(UDPConnection *connection, Timer &timer) {
     if (handle == nullptr) {
         // Should not happen
         std::cerr << "Error: Pcap file is not opened\n";
@@ -51,19 +53,23 @@ void PcapHandler::start(UDPConnection *connection) {
 
     const u_char *packet;
     struct pcap_pkthdr header;
+    PcapData pcapData;
+    int payloadSize = 0;
 
     while ((packet = pcap_next(handle, &header)) != nullptr) {
-        proccessPacket(&header, packet, flowCache);
+        memset(&pcapData, 0, sizeof(struct PcapData));
+        payloadSize = proccessPacket(&header, packet, &pcapData);
+        if (payloadSize > -1) {
+            Flow flow(pcapData.srcIP, pcapData.destIP, pcapData.srcPort, pcapData.destPort);
+            flowCache.updateFlow(flow, static_cast<uint32_t>(payloadSize));
+        }
     }
 
-
-
     flowCache.print();
-
 }
 
-void PcapHandler::proccessPacket(const struct pcap_pkthdr *header, const u_char *packet, FlowCache &flowCache) {
-    static int packet_id = 0;
+int PcapHandler::proccessPacket(const struct pcap_pkthdr *header, const u_char *packet, PcapData *pData) {
+    int payloadSize = -1;
 
     const struct ether_header *eth_header = (struct ether_header *)packet;
 
@@ -71,31 +77,12 @@ void PcapHandler::proccessPacket(const struct pcap_pkthdr *header, const u_char 
         const struct ip *ip_header = (struct ip *)(packet + sizeof(struct ether_header));
 
         unsigned int ip_len = ip_header->ip_hl * 4;
-        uint32_t payloadSize = 0;
-
-        // char srcIP[INET_ADDRSTRLEN];
-        // char destIP[INET_ADDRSTRLEN];
 
         struct in_addr srcIPStruct = ip_header->ip_src;
         struct in_addr destIPStruct = ip_header->ip_dst;
         if (ip_header->ip_p == IPPROTO_TCP) {
             const struct tcphdr *tcp_header = (struct tcphdr *)(packet + sizeof(struct ether_header) + ip_len);
-
-            payloadSize = header->len - sizeof(struct ether_header);
-            // memset(srcIP, 0, INET_ADDRSTRLEN);
-            //
-            // memset(destIP, 0, INET_ADDRSTRLEN);
-            // inet_ntop(AF_INET, &(ip_header->ip_src), srcIP, INET_ADDRSTRLEN);
-            // inet_ntop(AF_INET, &(ip_header->ip_dst), destIP, INET_ADDRSTRLEN);
-
-            // uint16_t srcPort = ntohs(tcp_header->source);
-            // uint16_t destPort = ntohs(tcp_header->dest);
-
-            // std::cout << "Packet no.: " << packet_id << std::endl;
-            // std::cout << srcIP << ":" << srcPort << " --->  ";
-            // std::cout << destIP << ":" << destPort << std::endl;
-            // std::cout << "\n";
-            packet_id++;
+            struct timeval tv = header->ts;
 
             uint32_t srcIP = srcIPStruct.s_addr;
             uint32_t destIP = destIPStruct.s_addr;
@@ -103,10 +90,14 @@ void PcapHandler::proccessPacket(const struct pcap_pkthdr *header, const u_char 
             uint16_t srcPort = tcp_header->source;
             uint16_t destPort = tcp_header->dest;
 
-            Flow flow(srcIP, destIP, srcPort, destPort);
+            payloadSize = header->len - sizeof(struct ether_header);
 
-            flowCache.updateFlow(flow, payloadSize);
+            pData->srcIP = srcIP;
+            pData->destIP = destIP;
+            pData->srcPort = srcPort;
+            pData->destPort = destPort;
+            pData->timeData = tv;
         }
     }
-
+    return payloadSize;
 }
