@@ -11,7 +11,7 @@
 #include <string>
 
 #include "../include/Flow.h"
-#include "../include/tools.h"
+#include "../include/Tools.h"
 #include "../include/UDPConnection.h"
 #include "../include/PcapHandler.h"
 
@@ -24,6 +24,7 @@ int main(int argc, char *argv[]) {
     }
 
     UDPConnection *connection = new UDPConnection(args.hostname, args.port);
+    Timer timer(args.active_timeout, args.inactive_timeout);
 
     if (!connection->connect()) {
         std::cerr << "Unable to connect to: " << args.hostname << ":" << args.port << std::endl;
@@ -38,7 +39,7 @@ int main(int argc, char *argv[]) {
     PcapHandler pcap_handler(args.pcap_file);
 
     pcap_handler.openPcap();
-    pcap_handler.start(connection);
+    pcap_handler.start(connection, timer);
 
     // connection->printData();
 

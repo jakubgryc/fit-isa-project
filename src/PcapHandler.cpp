@@ -13,7 +13,6 @@
 #include <cstring>
 
 #include "../include/Flow.h"
-#include "../include/tools.h"
 
 /**
  * @brief PcapHandler constructor
@@ -49,7 +48,6 @@ void PcapHandler::start(UDPConnection *connection, Timer &timer) {
     }
 
     FlowCache flowCache;
-    std::cout << "size of flowCache is: " << sizeof(flowCache) << std::endl;
 
     const u_char *packet;
     struct pcap_pkthdr header;

@@ -3,7 +3,7 @@
  * @brief Helper tools containing argument parsing and handling time
  */
 
-#include "../include/tools.h"
+#include "../include/Tools.h"
 
 #include <iostream>
 
@@ -12,7 +12,7 @@ Timer::Timer(int activeTimeout, int inactiveTimeout)
       activeTimeout(activeTimeout),
       inactiveTimeout(inactiveTimeout) {}
 
-uint32_t Timer::timeDifference() const {
+uint32_t Timer::getSysUptime() const {
     auto currentTime = std::chrono::high_resolution_clock::now();
 
     auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - programStartTime).count();

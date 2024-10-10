@@ -23,6 +23,12 @@
  */
 class FlowCache {
    public:
+    /**
+     * @brief public function to update parameters of a flow such as timestamps and total packet size and count
+     *
+     * @param flow current flow
+     * @param packetSize Packet size in bytes
+     */
     void updateFlow(const Flow &flow, uint32_t packetSize);
     void removeFlow(const std::string &key);
     void print();

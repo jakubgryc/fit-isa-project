@@ -16,8 +16,7 @@ struct Arguments {
 class Timer {
    public:
     Timer(int activeTimeout, int inactiveTimeout);
-    uint32_t timeDifference() const;
-
+    uint32_t getSysUptime() const;
 
    private:
     std::chrono::high_resolution_clock::time_point programStartTime;
