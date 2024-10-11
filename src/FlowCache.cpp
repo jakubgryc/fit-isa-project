@@ -22,6 +22,9 @@ void FlowCache::handleFlow(const Flow &flow, uint32_t packetSize, struct timeval
     } else {
         // Flow is already in flowcache, update its information
         // std::cout << "Flow exists, UPDATING\n";
+        if (timer.checkFlowTimeouts(it->second->startTime, it->second->lastSeenTime, packetTimestamp)) {
+            std::cout << "TIMEOUT OVEREACHED!!!!!!!\n";
+        }
         it->second->update(packetSize, packetTimestamp);
     }
 

@@ -43,6 +43,16 @@ uint32_t Timer::getTimeDifference(struct timeval *t1, struct timeval *t2) {
     return timeDiff_m;
 }
 
+bool Timer::checkFlowTimeouts(uint32_t firstSeenTime, uint32_t lastSeenTime, uint32_t currentTime) {
+    // The arguments are in milliseconds, the active and inactive timeouts are in seconds,
+    // so we need to convert the timeouts to milliseconds
+    if ((currentTime - firstSeenTime) > activeTimeout * 1000) return true;
+
+    if ((currentTime - lastSeenTime) > inactiveTimeout * 1000) return true;
+
+    return false;
+}
+
 void Timer::printStartTime() { std::cout << "start time is: " << programStartTime.tv_sec << std::endl; }
 
 struct timeval *Timer::getStartTime() { return &programStartTime; }

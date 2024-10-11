@@ -50,6 +50,16 @@ class Timer {
 
     struct timeval *getStartTime();
 
+    /**
+     * @brief Function to determine if the flow has extended either the active or inactive timeour
+     *
+     * @param firstSeenTime 
+     * @param lastSeenTime 
+     * @param currentTime 
+     * @return true if either one of the timers are expired, resulting in sending the flow, in other case false
+     */
+    bool checkFlowTimeouts(uint32_t firstSeenTime, uint32_t lastSeenTime, uint32_t currentTime);
+
     void printStartTime();
 
    private:
