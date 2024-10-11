@@ -47,19 +47,22 @@ void PcapHandler::start(UDPConnection *connection, Timer &timer) {
         return;
     }
 
-    FlowCache flowCache;
+    FlowCache flowCache(timer);
+    PcapData pcapData;
 
     const u_char *packet;
     struct pcap_pkthdr header;
-    PcapData pcapData;
+
     int payloadSize = 0;
+    uint32_t packetSysTime;
 
     while ((packet = pcap_next(handle, &header)) != nullptr) {
         memset(&pcapData, 0, sizeof(struct PcapData));
         payloadSize = proccessPacket(&header, packet, &pcapData);
-        if (payloadSize > -1) {
+        if (payloadSize != -1) {
             Flow flow(pcapData.srcIP, pcapData.destIP, pcapData.srcPort, pcapData.destPort);
-            flowCache.updateFlow(flow, static_cast<uint32_t>(payloadSize));
+
+            flowCache.handleFlow(flow, static_cast<uint32_t>(payloadSize), pcapData.timeData);
         }
     }
 

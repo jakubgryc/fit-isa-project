@@ -2,9 +2,10 @@
 #ifndef TOOLS_H
 #define TOOLS_H
 
-#include <string>
 #include <sys/time.h>
+
 #include <cstdint>
+#include <string>
 
 struct Arguments {
     std::string hostname;
@@ -24,7 +25,7 @@ class Timer {
     /**
      * @brief Timer constructor
      *
-     * @param Active timeout active timeout parsed from arguments (or implicitly 60) 
+     * @param Active timeout active timeout parsed from arguments (or implicitly 60)
      * @param inactiveTimeout Inactive timeout parsed from arguments (or implicitly 60)
      */
     Timer(int activeTimeout, int inactiveTimeout);
@@ -35,7 +36,19 @@ class Timer {
      *        very small number approaching zero
      * @return System uptime since the program has started in milliseconds
      */
-    uint32_t getSysUptime() const;
+    uint32_t getSysUptime();
+
+    /**
+     * @brief Calculates the difference of times in milliseconds
+     * @brief t1 - t2
+     *
+     * @param t1 timeval structure of more recent timestamp
+     * @param t2 timeval structure of older timestamp
+     * @return Time difference in milliseconds
+     */
+    uint32_t getTimeDifference(struct timeval *t1, struct timeval *t2);
+
+    struct timeval *getStartTime();
 
     void printStartTime();
 

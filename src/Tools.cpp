@@ -11,21 +11,11 @@ Timer::Timer(int activeTimeout, int inactiveTimeout) : activeTimeout(activeTimeo
     gettimeofday(&programStartTime, nullptr);
 }
 
-uint32_t Timer::getSysUptime() const {
+uint32_t Timer::getSysUptime() {
     struct timeval currentTime;
     gettimeofday(&currentTime, nullptr);
 
-    uint32_t sysUptime;
-
-    int64_t seconds = currentTime.tv_sec - programStartTime.tv_sec;
-    int64_t microseconds = currentTime.tv_usec - programStartTime.tv_usec;
-
-    if (microseconds < 0) {
-        microseconds += 1000000L;
-        seconds--;
-    }
-
-    sysUptime = seconds * 1000 + microseconds / 1000;
+    uint32_t sysUptime = getTimeDifference(&currentTime, &programStartTime);
 
     // Note to myself:
     // If the program runs for more than 49 days, there may be uint32 overflow. (UINT32MAX in milliseconds is roughly 49
@@ -33,7 +23,29 @@ uint32_t Timer::getSysUptime() const {
     return sysUptime;
 }
 
+uint32_t Timer::getTimeDifference(struct timeval *t1, struct timeval *t2) {
+    // Note:
+    // If the time difference is more than 49 days (UINT32 MAX in milliseconds is roughly 49 days), there may be a
+    // uint32 overflow In that case it may not display the time properly
+    //
+    // When analysing the pcap timestamp, the time will be correct if only interpreted as signed integer, because
+    // the packet was captured in the past when compared to the run of this program.
+    uint32_t timeDiff_m;
+    int32_t seconds = t1->tv_sec - t2->tv_sec;
+    int32_t microseconds = t1->tv_usec - t2->tv_usec;
+
+    if (microseconds < 0) {
+        microseconds += 1000000L;
+        seconds--;
+    }
+
+    timeDiff_m = seconds * 1000 + microseconds / 1000;
+    return timeDiff_m;
+}
+
 void Timer::printStartTime() { std::cout << "start time is: " << programStartTime.tv_sec << std::endl; }
+
+struct timeval *Timer::getStartTime() { return &programStartTime; }
 
 void print_err() {
     std::cerr << "Usage: ./p2nprobe <host>:<port> <pcap_file_path> [-a <active_timeout> -i <inactive_timeout>]\n";
