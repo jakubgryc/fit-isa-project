@@ -2,8 +2,9 @@
 #ifndef TOOLS_H
 #define TOOLS_H
 
-#include <chrono>
 #include <string>
+#include <sys/time.h>
+#include <cstdint>
 
 struct Arguments {
     std::string hostname;
@@ -13,13 +14,33 @@ struct Arguments {
     int inactive_timeout = 60;
 };
 
+/**
+ * @class Timer
+ * @brief Timer interface to handle time functionality>
+ *
+ */
 class Timer {
    public:
+    /**
+     * @brief Timer constructor
+     *
+     * @param Active timeout active timeout parsed from arguments (or implicitly 60) 
+     * @param inactiveTimeout Inactive timeout parsed from arguments (or implicitly 60)
+     */
     Timer(int activeTimeout, int inactiveTimeout);
+
+    /**
+     * @brief Function returns current SysUptime.
+     * @note Due to the nature of the project the uptime will be
+     *        very small number approaching zero
+     * @return System uptime since the program has started in milliseconds
+     */
     uint32_t getSysUptime() const;
 
+    void printStartTime();
+
    private:
-    std::chrono::high_resolution_clock::time_point programStartTime;
+    struct timeval programStartTime;
     int activeTimeout;
     int inactiveTimeout;
 };

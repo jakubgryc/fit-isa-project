@@ -7,21 +7,33 @@
 
 #include <iostream>
 
-Timer::Timer(int activeTimeout, int inactiveTimeout)
-    : programStartTime(std::chrono::high_resolution_clock::now()),
-      activeTimeout(activeTimeout),
-      inactiveTimeout(inactiveTimeout) {}
+Timer::Timer(int activeTimeout, int inactiveTimeout) : activeTimeout(activeTimeout), inactiveTimeout(inactiveTimeout) {
+    gettimeofday(&programStartTime, nullptr);
+}
 
 uint32_t Timer::getSysUptime() const {
-    auto currentTime = std::chrono::high_resolution_clock::now();
+    struct timeval currentTime;
+    gettimeofday(&currentTime, nullptr);
 
-    auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - programStartTime).count();
+    uint32_t sysUptime;
+
+    int64_t seconds = currentTime.tv_sec - programStartTime.tv_sec;
+    int64_t microseconds = currentTime.tv_usec - programStartTime.tv_usec;
+
+    if (microseconds < 0) {
+        microseconds += 1000000L;
+        seconds--;
+    }
+
+    sysUptime = seconds * 1000 + microseconds / 1000;
 
     // Note to myself:
-    // If the program runs for more than 49 days, there may be uint32 overflow.
-    // Due to the nature of the project, the chance of this happening is almost zero.
-    return static_cast<uint32_t>(elapsedTime);
+    // If the program runs for more than 49 days, there may be uint32 overflow. (UINT32MAX in milliseconds is roughly 49
+    // days) Due to the nature of the project, the chance of this happening is almost zero.
+    return sysUptime;
 }
+
+void Timer::printStartTime() { std::cout << "start time is: " << programStartTime.tv_sec << std::endl; }
 
 void print_err() {
     std::cerr << "Usage: ./p2nprobe <host>:<port> <pcap_file_path> [-a <active_timeout> -i <inactive_timeout>]\n";
