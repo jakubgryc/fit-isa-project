@@ -17,6 +17,10 @@ Flow::Flow(uint32_t srcIP, uint32_t destIP, uint16_t srcPort, uint16_t destPort)
       lastSeenTime(0) {
 }
 
+void Flow::setFirst(uint32_t packetTime) {
+    startTime = packetTime;
+}
+
 void Flow::update(uint32_t packetSize, uint32_t timestamp) {
     packetCount++;
     byteCount += packetSize;

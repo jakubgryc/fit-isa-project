@@ -14,6 +14,7 @@
 #include <arpa/inet.h>
 
 #include "Flow.h"
+#include "Tools.h"
 
 /**
  * @class FlowCache
@@ -23,18 +24,22 @@
  */
 class FlowCache {
    public:
+    
+    FlowCache(Timer &timer);
+
     /**
      * @brief public function to update parameters of a flow such as timestamps and total packet size and count
      *
      * @param flow current flow
      * @param packetSize Packet size in bytes
      */
-    void updateFlow(const Flow &flow, uint32_t packetSize);
+    void handleFlow(const Flow &flow, uint32_t packetSize, struct timeval packetTime);
     void removeFlow(const std::string &key);
     void print();
 
    private:
     std::unordered_map<std::string, std::shared_ptr<Flow>> flowCache;
+    Timer timer;
 
     std::string getFlowKey(const Flow &flow);
 };

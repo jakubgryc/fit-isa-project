@@ -4,20 +4,25 @@
 
 #include <netinet/in.h>
 
-void FlowCache::updateFlow(const Flow &flow, uint32_t packetSize) {
+FlowCache::FlowCache(Timer &timer) : timer(timer) {}
+
+void FlowCache::handleFlow(const Flow &flow, uint32_t packetSize, struct timeval packetTime) {
     std::string flowKey = getFlowKey(flow);
 
     auto it = flowCache.find(flowKey);
+
+    uint32_t packetTimestamp = timer.getTimeDifference(&packetTime, timer.getStartTime());
 
     if (it == flowCache.end()) {
         // Flow not in flowcache, create a new one
         // std::cout << "Flow doesnt exist, CREATING NEW ONE\n";
         flowCache[flowKey] = std::make_shared<Flow>(flow);
-        flowCache[flowKey]->update(packetSize, 0);
+        flowCache[flowKey]->setFirst(packetTimestamp);
+        flowCache[flowKey]->update(packetSize, packetTimestamp);
     } else {
         // Flow is already in flowcache, update its information
         // std::cout << "Flow exists, UPDATING\n";
-        it->second->update(packetSize, flow.lastSeenTime);
+        it->second->update(packetSize, packetTimestamp);
     }
 
     return;
@@ -52,6 +57,9 @@ void FlowCache::print() {
         uint32_t packetCount = it->second->packetCount;
         std::cout << "Flow no: " << cnt << ":  ";
         std::cout << srcIP << ":" << srcPort << " -> " << destIP << ":" << destPort << "    " << byteCount << std::endl;
+        std::cout << "First: " << it->second->startTime << std::endl;
+        std::cout << "Last : " << it->second->lastSeenTime << std::endl;
+        std::cout << "\n";
         cnt++;
         totalBytes += byteCount;
         totalPackets += packetCount;

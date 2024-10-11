@@ -84,6 +84,13 @@ class Flow {
     Flow(uint32_t srcIP, uint32_t destIP, uint16_t srcPort, uint16_t destPort);
 
     /**
+     * @brief Function sets the first seen timestamp in milliseconds
+     *
+     * @param packetTime 
+     */
+    void setFirst(uint32_t packetTime);
+
+    /**
      * @brief Function to update the flow statistics
      *
      * @param packetSize Packet size to be added to the flow
