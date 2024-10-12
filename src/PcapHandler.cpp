@@ -73,6 +73,8 @@ void PcapHandler::start(UDPExporter *exporter, Timer &timer) {
         }
     }
 
+    flowCache.flushToExportAll();
+    std::cout << "Got here???\n";
     exporter->sendFlows(flowCache.getExportCache(), timer.getEpochTuple());
     flowCache.print();
 }
