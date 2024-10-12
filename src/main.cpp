@@ -12,7 +12,7 @@
 
 #include "../include/Flow.h"
 #include "../include/Tools.h"
-#include "../include/UDPConnection.h"
+#include "../include/UDPExporter.h"
 #include "../include/PcapHandler.h"
 
 
@@ -23,7 +23,7 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
-    UDPConnection *connection = new UDPConnection(args.hostname, args.port);
+    UDPExporter *connection = new UDPExporter(args.hostname, args.port);
     Timer timer(args.active_timeout, args.inactive_timeout);
 
     if (!connection->connect()) {

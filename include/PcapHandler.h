@@ -18,7 +18,7 @@
 #include <string>
 
 #include "FlowCache.h"
-#include "UDPConnection.h"
+#include "UDPExporter.h"
 #include "Tools.h"
 
 struct PcapData {
@@ -43,7 +43,7 @@ class PcapHandler {
 
     bool openPcap();
 
-    void start(UDPConnection *connection, Timer &timer);
+    void start(UDPExporter *connection, Timer &timer);
 
    private:
     int proccessPacket(const struct pcap_pkthdr *header, const u_char *packet, PcapData *pData);

@@ -40,7 +40,7 @@ bool PcapHandler::openPcap() {
     return true;
 }
 
-void PcapHandler::start(UDPConnection *connection, Timer &timer) {
+void PcapHandler::start(UDPExporter *connection, Timer &timer) {
     if (handle == nullptr) {
         // Should not happen
         std::cerr << "Error: Pcap file is not opened\n";

@@ -1,6 +1,6 @@
 /**
- * @file UDPConnection.h
- * @brief UDP Connection header file
+ * @file UDPExporter.h
+ * @brief UDP Exporter header file
  * @author Jakub Gryc <xgrycj03>
  */
 
@@ -11,10 +11,10 @@
 
 #include <string>
 
-class UDPConnection {
+class UDPExporter {
    public:
-    UDPConnection(const std::string hostname, int port);
-    ~UDPConnection();
+    UDPExporter(const std::string hostname, int port);
+    ~UDPExporter();
 
     bool connect();
     bool send_flow(const char *data);

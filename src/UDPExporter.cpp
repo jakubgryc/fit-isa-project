@@ -1,5 +1,5 @@
 
-#include "../include/UDPConnection.h"
+#include "../include/UDPExporter.h"
 
 #include <arpa/inet.h>
 #include <netdb.h>
@@ -10,18 +10,18 @@
 #include <cstring>
 #include <iostream>
 
-UDPConnection::UDPConnection(const std::string hostname, int port) : hostname(hostname), port(port), sockfd(-1) {
+UDPExporter::UDPExporter(const std::string hostname, int port) : hostname(hostname), port(port), sockfd(-1) {
     memset(&server_address, 0, sizeof(server_address));
 }
 
-UDPConnection::~UDPConnection() {
+UDPExporter::~UDPExporter() {
     if (sockfd != -1) {
         close(sockfd);
         std::cout << "Socket closed\n";
     }
 }
 
-bool UDPConnection::resolveHostname() {
+bool UDPExporter::resolveHostname() {
     struct addrinfo hints, *result;
     int status;
 
@@ -40,7 +40,7 @@ bool UDPConnection::resolveHostname() {
     return true;
 }
 
-bool UDPConnection::connect() {
+bool UDPExporter::connect() {
     if (!resolveHostname()) {
         return false;
     }
@@ -58,7 +58,7 @@ bool UDPConnection::connect() {
     return true;
 }
 
-bool UDPConnection::send_flow(const char *data) {
+bool UDPExporter::send_flow(const char *data) {
     static int mess_sent = 0;
     ssize_t bytes_tx =
         sendto(sockfd, data, strlen(data), 0, (struct sockaddr *)(&server_address), sizeof(server_address));
@@ -71,7 +71,7 @@ bool UDPConnection::send_flow(const char *data) {
     return true;
 }
 
-void UDPConnection::printData() {
+void UDPExporter::printData() {
     std::cout << "hostname is: |" << hostname << "|\n";
     std::cout << "port is: |" << port << "|\n";
 }
