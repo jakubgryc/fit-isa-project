@@ -50,17 +50,18 @@ void PcapHandler::start(UDPConnection *connection, Timer &timer) {
     FlowCache flowCache(timer);
     PcapData pcapData;
 
+    connection->printData();
+
     const u_char *packet;
     struct pcap_pkthdr header;
 
     int payloadSize = 0;
-    uint32_t packetSysTime;
 
     while ((packet = pcap_next(handle, &header)) != nullptr) {
         memset(&pcapData, 0, sizeof(struct PcapData));
         payloadSize = proccessPacket(&header, packet, &pcapData);
         if (payloadSize != -1) {
-            Flow flow(pcapData.srcIP, pcapData.destIP, pcapData.srcPort, pcapData.destPort);
+            Flow flow(pcapData.srcIP, pcapData.destIP, pcapData.srcPort, pcapData.destPort, pcapData.tcpFlags);
 
             flowCache.handleFlow(flow, static_cast<uint32_t>(payloadSize), pcapData.timeData);
         }
@@ -90,6 +91,7 @@ int PcapHandler::proccessPacket(const struct pcap_pkthdr *header, const u_char *
 
             uint16_t srcPort = tcp_header->source;
             uint16_t destPort = tcp_header->dest;
+            uint8_t tcpFlags = tcp_header->th_flags;
 
             payloadSize = header->len - sizeof(struct ether_header);
 
@@ -98,6 +100,7 @@ int PcapHandler::proccessPacket(const struct pcap_pkthdr *header, const u_char *
             pData->srcPort = srcPort;
             pData->destPort = destPort;
             pData->timeData = tv;
+            pData->tcpFlags = tcpFlags;
         }
     }
     return payloadSize;
