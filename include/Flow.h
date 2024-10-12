@@ -7,6 +7,8 @@
 #ifndef FLOW_H
 #define FLOW_H
 
+#define MAX_PACKETS 30
+
 #include <cstdint>
 #include <ctime>
 #include <iostream>
