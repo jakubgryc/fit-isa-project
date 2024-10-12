@@ -18,13 +18,22 @@ Flow::Flow(uint32_t srcIP, uint32_t destIP, uint16_t srcPort, uint16_t destPort,
       lastSeenTime(0) {
 }
 
-void Flow::setFirst(uint32_t packetTime) {
+void Flow::setFirst(uint32_t packetTime, uint8_t tcpflgs) {
+    clear();
     startTime = packetTime;
+    tcpFlags = tcpflgs;
 }
 
 void Flow::update(uint32_t packetSize, uint32_t timestamp) {
     packetCount++;
     byteCount += packetSize;
     lastSeenTime = timestamp;
-    return;
+}
+
+void Flow::clear() {
+    packetCount = 0;
+    byteCount = 0;
+    startTime = 0;
+    lastSeenTime = 0;
+    tcpFlags = 0;
 }

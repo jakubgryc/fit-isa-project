@@ -88,7 +88,7 @@ class Flow {
      *
      * @param packetTime 
      */
-    void setFirst(uint32_t packetTime);
+    void setFirst(uint32_t packetTime, uint8_t tcpflgs);
 
     /**
      * @brief Function to update the flow statistics
@@ -106,6 +106,11 @@ class Flow {
      * @return True if the flow has been inactive for longer than the timeout
      */
     bool isInactive(std::time_t currentTime, std::time_t inactiveTimeout);
+
+    /**
+     * @brief Resets the flow data to 0
+     */
+    void clear();
 };
 
 #endif  // !_FLOW_H
