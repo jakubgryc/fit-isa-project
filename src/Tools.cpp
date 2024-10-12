@@ -7,7 +7,8 @@
 
 #include <iostream>
 
-Timer::Timer(int activeTimeout, int inactiveTimeout) : activeTimeout(static_cast<uint32_t>(activeTimeout)), inactiveTimeout(static_cast<uint8_t>(inactiveTimeout)) {
+Timer::Timer(int activeTimeout, int inactiveTimeout)
+    : activeTimeout(static_cast<uint32_t>(activeTimeout)), inactiveTimeout(static_cast<uint8_t>(inactiveTimeout)) {
     gettimeofday(&programStartTime, nullptr);
 }
 
@@ -21,6 +22,16 @@ uint32_t Timer::getSysUptime() {
     // If the program runs for more than 49 days, there may be uint32 overflow. (UINT32MAX in milliseconds is roughly 49
     // days) Due to the nature of the project, the chance of this happening is almost zero.
     return sysUptime;
+}
+
+std::tuple<uint32_t, uint32_t, uint32_t> Timer::getEpochTuple() {
+    struct timeval currentTime;
+    std::tuple<uint32_t, uint32_t, uint32_t> resTuple;
+
+    gettimeofday(&currentTime, nullptr);
+
+    resTuple = std::make_tuple(getSysUptime(), currentTime.tv_sec, currentTime.tv_usec * 1000);
+    return resTuple;
 }
 
 uint32_t Timer::getTimeDifference(struct timeval *t1, struct timeval *t2) {

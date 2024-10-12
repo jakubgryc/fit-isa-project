@@ -40,7 +40,7 @@ bool PcapHandler::openPcap() {
     return true;
 }
 
-void PcapHandler::start(UDPExporter *connection, Timer &timer) {
+void PcapHandler::start(UDPExporter *exporter, Timer &timer) {
     if (handle == nullptr) {
         // Should not happen
         std::cerr << "Error: Pcap file is not opened\n";
@@ -50,7 +50,7 @@ void PcapHandler::start(UDPExporter *connection, Timer &timer) {
     FlowCache flowCache(timer);
     PcapData pcapData;
 
-    connection->printData();
+    exporter->printData();
 
     const u_char *packet;
     struct pcap_pkthdr header;
@@ -60,13 +60,20 @@ void PcapHandler::start(UDPExporter *connection, Timer &timer) {
     while ((packet = pcap_next(handle, &header)) != nullptr) {
         memset(&pcapData, 0, sizeof(struct PcapData));
         payloadSize = proccessPacket(&header, packet, &pcapData);
+
         if (payloadSize != -1) {
+            if (flowCache.exportCacheFull()) {
+                // export to collector
+                exporter->sendFlows(flowCache.getExportCache(), timer.getEpochTuple());
+            }
+
             Flow flow(pcapData.srcIP, pcapData.destIP, pcapData.srcPort, pcapData.destPort, pcapData.tcpFlags);
 
             flowCache.handleFlow(flow, static_cast<uint32_t>(payloadSize), pcapData.timeData);
         }
     }
 
+    exporter->sendFlows(flowCache.getExportCache(), timer.getEpochTuple());
     flowCache.print();
 }
 

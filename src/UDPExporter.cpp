@@ -58,16 +58,45 @@ bool UDPExporter::connect() {
     return true;
 }
 
-bool UDPExporter::send_flow(const char *data) {
+bool UDPExporter::sendFlows(std::queue<NetflowRecord> &exportCache,
+                            std::tuple<uint32_t, uint32_t, uint32_t> epochTuple) {
     static int mess_sent = 0;
+    struct NetflowHeader header;
+
+    header.version = htons(5);
+    header.flowCount = htons(exportCache.size());
+    header.sysUptime = htonl(std::get<0>(epochTuple));
+    header.unix_secs = htonl(std::get<1>(epochTuple));
+    header.unix_nsecs = htonl(std::get<2>(epochTuple));
+    header.flowSequence = htonl(0);
+    header.engine_type = 0;
+    header.engine_id = 0;
+    header.sampling_interval = htons(0);
+
+    size_t totalSize = sizeof(struct NetflowHeader) + sizeof(struct NetflowRecord) * exportCache.size();
+
+    char *buffer = new char[totalSize];
+    memcpy(buffer, &header, sizeof(struct NetflowHeader));
+
+    size_t currentOffset = sizeof(struct NetflowHeader);
+    while (!exportCache.empty()) {
+        struct NetflowRecord &nflwRd = exportCache.front();
+        memcpy(buffer + currentOffset, &nflwRd, sizeof(struct NetflowRecord));
+        currentOffset += sizeof(struct NetflowRecord);
+        exportCache.pop();
+    }
+
     ssize_t bytes_tx =
-        sendto(sockfd, data, strlen(data), 0, (struct sockaddr *)(&server_address), sizeof(server_address));
+        sendto(sockfd, buffer, totalSize, 0, (struct sockaddr *)(&server_address), sizeof(server_address));
     if (bytes_tx < 0) {
         std::cerr << "error: failed to send data\n";
     } else {
         mess_sent++;
-        std::cout << "(" << mess_sent << ") Sending: " << data;
     }
+
+    std::cout << "totalSize is?: " << totalSize << std::endl;
+    std::cout << "buffer size is?: " << sizeof(header) << std::endl;
+    delete[] buffer;
     return true;
 }
 
