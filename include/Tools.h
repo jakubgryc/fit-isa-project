@@ -64,8 +64,8 @@ class Timer {
 
    private:
     struct timeval programStartTime;
-    int activeTimeout;
-    int inactiveTimeout;
+    uint32_t activeTimeout;
+    uint32_t inactiveTimeout;
 };
 
 /**

@@ -7,7 +7,7 @@
 
 #include <iostream>
 
-Timer::Timer(int activeTimeout, int inactiveTimeout) : activeTimeout(activeTimeout), inactiveTimeout(inactiveTimeout) {
+Timer::Timer(int activeTimeout, int inactiveTimeout) : activeTimeout(static_cast<uint32_t>(activeTimeout)), inactiveTimeout(static_cast<uint8_t>(inactiveTimeout)) {
     gettimeofday(&programStartTime, nullptr);
 }
 
