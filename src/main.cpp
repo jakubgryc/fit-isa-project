@@ -23,10 +23,10 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
-    UDPExporter *connection = new UDPExporter(args.hostname, args.port);
+    UDPExporter *exporter = new UDPExporter(args.hostname, args.port);
     Timer timer(args.active_timeout, args.inactive_timeout);
 
-    if (!connection->connect()) {
+    if (!exporter->connect()) {
         std::cerr << "Unable to connect to: " << args.hostname << ":" << args.port << std::endl;
         // delete connection;
         return EXIT_FAILURE;
@@ -39,7 +39,7 @@ int main(int argc, char *argv[]) {
     PcapHandler pcap_handler(args.pcap_file);
 
     pcap_handler.openPcap();
-    pcap_handler.start(connection, timer);
+    pcap_handler.start(exporter, timer);
 
     // connection->printData();
 
@@ -51,7 +51,7 @@ int main(int argc, char *argv[]) {
     // std::cout << "inactive_timeout is: " << args.inactive_timeout << std::endl;
     // std::cout << "---------------------" << std::endl;
 
-    delete connection;
+    delete exporter;
 
     return 0;
 }
