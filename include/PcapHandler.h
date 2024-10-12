@@ -27,6 +27,7 @@ struct PcapData {
     uint16_t srcPort;
     uint16_t destPort;
     struct timeval timeData;
+    uint8_t tcpFlags;
 };
 
 /**

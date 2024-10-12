@@ -69,6 +69,7 @@ class Flow {
    public:
     uint32_t srcIP, destIP;
     uint16_t srcPort, destPort;
+    uint8_t  tcpFlags;
     uint32_t packetCount, byteCount;
     uint32_t startTime, lastSeenTime;
 
@@ -79,9 +80,8 @@ class Flow {
      * @param destIP Destination IP address
      * @param srcPort Source port number
      * @param destPort Destination port number
-     * @param protocol Protocol
      */
-    Flow(uint32_t srcIP, uint32_t destIP, uint16_t srcPort, uint16_t destPort);
+    Flow(uint32_t srcIP, uint32_t destIP, uint16_t srcPort, uint16_t destPort, uint8_t tcpFlags);
 
     /**
      * @brief Function sets the first seen timestamp in milliseconds
