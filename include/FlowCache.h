@@ -12,6 +12,7 @@
 #include <unordered_map>
 #include <vector>
 #include <arpa/inet.h>
+#include <queue>
 
 #include "Flow.h"
 #include "Tools.h"
@@ -36,11 +37,16 @@ class FlowCache {
     void handleFlow(const Flow &flow, uint32_t packetSize, struct timeval packetTime);
     void removeFlow(const std::string &key);
     void print();
+    bool exportCacheFull();
+    
+    std::queue<struct NetflowRecord> &getExportCache();
+    std::queue<struct NetflowRecord> exportCache;
 
    private:
     std::unordered_map<std::string, std::shared_ptr<Flow>> flowCache;
     Timer timer;
 
+    void prepareToExport(std::shared_ptr<Flow> flow);
     std::string getFlowKey(const Flow &flow);
 };
 

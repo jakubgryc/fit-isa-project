@@ -9,7 +9,10 @@
 
 #include <netinet/in.h>
 
+#include <queue>
 #include <string>
+
+#include "Flow.h"
 
 class UDPExporter {
    public:
@@ -17,12 +20,11 @@ class UDPExporter {
     ~UDPExporter();
 
     bool connect();
-    bool send_flow(const char *data);
+    bool sendFlows(std::queue<struct NetflowRecord> &exportCache, std::tuple<uint32_t, uint32_t, uint32_t> epochTuple);
     void printData();
 
    private:
     bool resolveHostname();
-
 
     struct sockaddr_in server_address;
 

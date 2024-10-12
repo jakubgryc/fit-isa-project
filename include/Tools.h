@@ -39,6 +39,11 @@ class Timer {
     uint32_t getSysUptime();
 
     /**
+     * @brief Returns a tuple with unix_secs and unix_nsecs to be added into Netflow heade
+     */
+    std::tuple<uint32_t, uint32_t, uint32_t> getEpochTuple();
+
+    /**
      * @brief Calculates the difference of times in milliseconds
      * @brief t1 - t2
      *
