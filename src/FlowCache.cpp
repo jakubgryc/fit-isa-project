@@ -37,6 +37,14 @@ void FlowCache::handleFlow(const Flow &flow, uint32_t packetSize, struct timeval
     return;
 }
 
+void FlowCache::flushToExportAll() {
+    for (auto it = flowCache.begin(); it != flowCache.end(); it++) {
+        std::cout << "exporting...\n";
+        prepareToExport(it->second);
+        std::cout << "erased...\n";
+    } 
+}
+
 void FlowCache::prepareToExport(std::shared_ptr<Flow> flow) {
     struct NetflowRecord nfRecord;
     nfRecord.srcIP = flow->srcIP;    // already in network order

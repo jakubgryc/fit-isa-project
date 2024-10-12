@@ -36,6 +36,7 @@ class FlowCache {
      */
     void handleFlow(const Flow &flow, uint32_t packetSize, struct timeval packetTime);
     void removeFlow(const std::string &key);
+    void flushToExportAll();
     void print();
     bool exportCacheFull();
     
