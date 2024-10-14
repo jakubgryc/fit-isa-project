@@ -63,9 +63,12 @@ bool UDPExporter::sendFlows(std::queue<NetflowRecord> &exportCache, std::tuple<u
     static int mess_sent = 0;
 
     while (!exportCache.empty() && (!sendOnlyMAX || exportCache.size() >= MAX_PACKETS)) {
+        size_t totalFlows = exportCache.size();
+        if (totalFlows > MAX_PACKETS) totalFlows = MAX_PACKETS;
+
         struct NetflowHeader header;
         header.version = htons(5);
-        header.flowCount = htons(exportCache.size());
+        header.flowCount = htons(static_cast<uint32_t>(totalFlows));
         header.sysUptime = htonl(std::get<0>(epochTuple));
         header.unix_secs = htonl(std::get<1>(epochTuple));
         header.unix_nsecs = htonl(std::get<2>(epochTuple));
@@ -75,8 +78,6 @@ bool UDPExporter::sendFlows(std::queue<NetflowRecord> &exportCache, std::tuple<u
         header.sampling_interval = htons(0);
 
         // calculate the totalSize and clamp it to 30 packets
-        size_t totalFlows = exportCache.size();
-        if (totalFlows > MAX_PACKETS) totalFlows = MAX_PACKETS;
 
         size_t totalSize = sizeof(struct NetflowHeader) + sizeof(struct NetflowRecord) * totalFlows;
 
