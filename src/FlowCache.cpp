@@ -5,6 +5,8 @@
 #include <netinet/in.h>
 
 #include <bitset>
+#include <map>
+#include <vector>
 
 FlowCache::FlowCache(Timer &timer) : timer(timer) {}
 
@@ -67,13 +69,22 @@ void FlowCache::prepareToExport(std::shared_ptr<Flow> flow) {
 }
 
 void FlowCache::checkForExpiredFlows(uint32_t timestamp) {
+    std::map<uint32_t, std::vector<std::shared_ptr<Flow>>> exportMap;
+    uint32_t expirationTime;
     for (auto it = flowCache.begin(); it != flowCache.end();) {
-        if (timer.checkFlowTimeouts(it->second->startTime, it->second->lastSeenTime, timestamp)) {
+        if (timer.checkFlowTimeouts(it->second->startTime, it->second->lastSeenTime, timestamp, &expirationTime)) {
             // Flow is expired, send it to export cache and remove from flow cache
-            prepareToExport(it->second);
+            exportMap[expirationTime].push_back(it->second);
             it = flowCache.erase(it);
         } else {
             it++;
+        }
+    }
+
+    // Loop through the export map in descending order to export the flows with the biggest expiration time first
+    for (auto it = exportMap.rbegin(); it != exportMap.rend();) {
+        for (const auto &flow : it->second) {
+            prepareToExport(flow);
         }
     }
 }

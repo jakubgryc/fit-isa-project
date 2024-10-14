@@ -54,14 +54,30 @@ uint32_t Timer::getTimeDifference(struct timeval *t1, struct timeval *t2) {
     return timeDiff_m;
 }
 
-bool Timer::checkFlowTimeouts(uint32_t firstSeenTime, uint32_t lastSeenTime, uint32_t currentTime) {
+bool Timer::checkFlowTimeouts(uint32_t firstSeenTime, uint32_t lastSeenTime, uint32_t currentTime,
+                              uint32_t *expirationTime) {
     // The arguments are in milliseconds, the active and inactive timeouts are in seconds,
     // so we need to convert the timeouts to milliseconds
-    if ((currentTime - firstSeenTime) > activeTimeout * 1000) return true;
+    int64_t first = static_cast<int64_t>(firstSeenTime);
+    int64_t last = static_cast<int64_t>(lastSeenTime);
+    int64_t current = static_cast<int64_t>(currentTime);
+    int64_t activeT = static_cast<int64_t>(activeTimeout);
+    int64_t inactiveT = static_cast<int64_t>(inactiveTimeout);
+    int64_t expTimeActive;
+    int64_t expTimeInactive;
+    bool expired = false;
 
-    if ((currentTime - lastSeenTime) > inactiveTimeout * 1000) return true;
+    expTimeActive = (current - first) - activeT * 1000;
+    expTimeInactive = (current - last) - inactiveT * 1000;
 
-    return false;
+    if (expTimeActive > 0) expired = true;
+
+    if (expTimeInactive > 0) expired = true;
+
+    *expirationTime =
+        expTimeActive > expTimeInactive ? static_cast<uint32_t>(expTimeActive) : static_cast<uint32_t>(expTimeInactive);
+
+    return expired;
 }
 
 void Timer::printStartTime() { std::cout << "start time is: " << programStartTime.tv_sec << std::endl; }
