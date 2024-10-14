@@ -58,11 +58,11 @@ bool UDPExporter::connect() {
     return true;
 }
 
-bool UDPExporter::sendFlows(std::queue<NetflowRecord> &exportCache,
-                            std::tuple<uint32_t, uint32_t, uint32_t> epochTuple) {
+bool UDPExporter::sendFlows(std::queue<NetflowRecord> &exportCache, std::tuple<uint32_t, uint32_t, uint32_t> epochTuple,
+                            bool sendOnlyMAX) {
     static int mess_sent = 0;
 
-    while (!exportCache.empty()) {
+    while (!exportCache.empty() && (!sendOnlyMAX || exportCache.size() >= MAX_PACKETS)) {
         struct NetflowHeader header;
         header.version = htons(5);
         header.flowCount = htons(exportCache.size());

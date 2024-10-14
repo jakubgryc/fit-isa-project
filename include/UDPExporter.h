@@ -20,7 +20,7 @@ class UDPExporter {
     ~UDPExporter();
 
     bool connect();
-    bool sendFlows(std::queue<struct NetflowRecord> &exportCache, std::tuple<uint32_t, uint32_t, uint32_t> epochTuple);
+    bool sendFlows(std::queue<struct NetflowRecord> &exportCache, std::tuple<uint32_t, uint32_t, uint32_t> epochTuple, bool sendOnlyMAX);
     void printData();
 
    private:

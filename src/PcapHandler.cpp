@@ -64,7 +64,7 @@ void PcapHandler::start(UDPExporter *exporter, Timer &timer) {
         if (payloadSize != -1) {
             if (flowCache.exportCacheFull()) {
                 // export to collector
-                exporter->sendFlows(flowCache.getExportCache(), timer.getEpochTuple());
+                exporter->sendFlows(flowCache.getExportCache(), timer.getEpochTuple(), true);
             }
 
             Flow flow(pcapData.srcIP, pcapData.destIP, pcapData.srcPort, pcapData.destPort, pcapData.tcpFlags);
@@ -75,7 +75,7 @@ void PcapHandler::start(UDPExporter *exporter, Timer &timer) {
 
     flowCache.flushToExportAll();
     std::cout << "Got here???\n";
-    exporter->sendFlows(flowCache.getExportCache(), timer.getEpochTuple());
+    exporter->sendFlows(flowCache.getExportCache(), timer.getEpochTuple(), false);
     flowCache.print();
 }
 

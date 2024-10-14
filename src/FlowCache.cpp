@@ -34,10 +34,9 @@ void FlowCache::handleFlow(const Flow &flow, uint32_t packetSize, struct timeval
 }
 
 void FlowCache::flushToExportAll() {
-    for (auto it = flowCache.begin(); it != flowCache.end(); it++) {
-        std::cout << "exporting...\n";
+    for (auto it = flowCache.begin(); it != flowCache.end();) {
         prepareToExport(it->second);
-        std::cout << "erased...\n";
+        it = flowCache.erase(it);
     }
 }
 
@@ -79,7 +78,7 @@ void FlowCache::checkForExpiredFlows(uint32_t timestamp) {
     }
 }
 
-bool FlowCache::exportCacheFull() { return exportCache.size() == 30 ? true : false; }
+bool FlowCache::exportCacheFull() { return exportCache.size() >= MAX_PACKETS ? true : false; }
 
 std::string FlowCache::getFlowKey(const Flow &flow) {
     return std::to_string(flow.srcIP) + std::to_string(flow.srcPort) + std::to_string(flow.destIP) +
