@@ -82,8 +82,9 @@ void FlowCache::checkForExpiredFlows(uint32_t timestamp) {
     }
 
     // Loop through the export map in descending order to export the flows with the biggest expiration time first
-    for (auto it = exportMap.rbegin(); it != exportMap.rend();) {
+    for (auto it = exportMap.rbegin(); it != exportMap.rend(); it++) {
         for (const auto &flow : it->second) {
+        std::cout << "stuck here\n";
             prepareToExport(flow);
         }
     }
