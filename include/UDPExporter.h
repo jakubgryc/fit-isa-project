@@ -14,13 +14,29 @@
 
 #include "Flow.h"
 
+/**
+ * @class UDPExporter
+ * @brief Interface to manage exporting individual flows via UDP
+ *
+ */
 class UDPExporter {
    public:
+    /**
+     * @brief Constructor of UDPExporter class
+     *
+     * @param hostname hostname or IP address of a collector
+     * @param port UDP port of a collector
+     */
     UDPExporter(const std::string hostname, int port);
+
+    /**
+     * @brief Destroyer
+     */
     ~UDPExporter();
 
     bool connect();
-    bool sendFlows(std::queue<struct NetflowRecord> &exportCache, std::tuple<uint32_t, uint32_t, uint32_t> epochTuple, bool sendOnlyMAX);
+    bool sendFlows(std::queue<struct NetflowRecord> &exportCache, std::tuple<uint32_t, uint32_t, uint32_t> epochTuple,
+                   bool sendOnlyMAX);
     void printData();
 
    private:
