@@ -44,10 +44,11 @@ class FlowCache {
     std::queue<struct NetflowRecord> exportCache;
 
    private:
-    std::unordered_map<std::string, std::shared_ptr<Flow>> flowCache;
     Timer timer;
 
+    void checkForExpiredFlows(uint32_t timestamp);
     void prepareToExport(std::shared_ptr<Flow> flow);
+    std::unordered_map<std::string, std::shared_ptr<Flow>> flowCache;
     std::string getFlowKey(const Flow &flow);
 };
 

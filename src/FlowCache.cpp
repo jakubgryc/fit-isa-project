@@ -9,11 +9,13 @@
 FlowCache::FlowCache(Timer &timer) : timer(timer) {}
 
 void FlowCache::handleFlow(const Flow &flow, uint32_t packetSize, struct timeval packetTime) {
+    uint32_t packetTimestamp = timer.getTimeDifference(&packetTime, timer.getStartTime());
+
+    checkForExpiredFlows(packetTimestamp);
+
     std::string flowKey = getFlowKey(flow);
 
     auto it = flowCache.find(flowKey);
-
-    uint32_t packetTimestamp = timer.getTimeDifference(&packetTime, timer.getStartTime());
 
     if (it == flowCache.end()) {
         // Flow not in flowcache, create a new one
@@ -24,12 +26,6 @@ void FlowCache::handleFlow(const Flow &flow, uint32_t packetSize, struct timeval
     } else {
         // Flow is already in flowcache, update its information
         // std::cout << "Flow exists, UPDATING\n";
-        if (timer.checkFlowTimeouts(it->second->startTime, it->second->lastSeenTime, packetTimestamp)) {
-            std::cout << "TIMEOUT OVEREACHED!!!!!!!\n";
-            // timeout has overeach, prepare to export into export cache
-            prepareToExport(it->second);
-            it->second->setFirst(packetTimestamp, flow.tcpFlags);
-        }
         it->second->update(packetSize, packetTimestamp);
         it->second->tcpFlags |= flow.tcpFlags;
     }
@@ -42,7 +38,7 @@ void FlowCache::flushToExportAll() {
         std::cout << "exporting...\n";
         prepareToExport(it->second);
         std::cout << "erased...\n";
-    } 
+    }
 }
 
 void FlowCache::prepareToExport(std::shared_ptr<Flow> flow) {
@@ -69,6 +65,18 @@ void FlowCache::prepareToExport(std::shared_ptr<Flow> flow) {
     nfRecord.pad2 = htons(0);
 
     exportCache.push(nfRecord);
+}
+
+void FlowCache::checkForExpiredFlows(uint32_t timestamp) {
+    for (auto it = flowCache.begin(); it != flowCache.end();) {
+        if (timer.checkFlowTimeouts(it->second->startTime, it->second->lastSeenTime, timestamp)) {
+            // Flow is expired, send it to export cache and remove from flow cache
+            prepareToExport(it->second);
+            it = flowCache.erase(it);
+        } else {
+            it++;
+        }
+    }
 }
 
 bool FlowCache::exportCacheFull() { return exportCache.size() == 30 ? true : false; }
