@@ -50,8 +50,6 @@ void PcapHandler::start(UDPExporter *exporter, Timer &timer) {
     FlowCache flowCache(timer);
     PcapData pcapData;
 
-    exporter->printData();
-
     const u_char *packet;
     struct pcap_pkthdr header;
 
@@ -64,7 +62,7 @@ void PcapHandler::start(UDPExporter *exporter, Timer &timer) {
         if (payloadSize != -1) {
             if (flowCache.exportCacheFull()) {
                 // export to collector
-                exporter->sendFlows(flowCache.getExportCache(), timer.getEpochTuple(), true);
+                exporter->sendFlows(flowCache.getExportCache(), timer, true);
             }
 
             Flow flow(pcapData.srcIP, pcapData.destIP, pcapData.srcPort, pcapData.destPort, pcapData.tcpFlags);
@@ -74,9 +72,7 @@ void PcapHandler::start(UDPExporter *exporter, Timer &timer) {
     }
 
     flowCache.flushToExportAll();
-    std::cout << "Got here???\n";
-    exporter->sendFlows(flowCache.getExportCache(), timer.getEpochTuple(), false);
-    flowCache.print();
+    exporter->sendFlows(flowCache.getExportCache(), timer, false);
 }
 
 int PcapHandler::proccessPacket(const struct pcap_pkthdr *header, const u_char *packet, PcapData *pData) {
@@ -112,5 +108,6 @@ int PcapHandler::proccessPacket(const struct pcap_pkthdr *header, const u_char *
             pData->tcpFlags = tcpFlags;
         }
     }
+    total++;
     return payloadSize;
 }
