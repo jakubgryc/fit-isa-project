@@ -108,6 +108,5 @@ int PcapHandler::proccessPacket(const struct pcap_pkthdr *header, const u_char *
             pData->tcpFlags = tcpFlags;
         }
     }
-    total++;
     return payloadSize;
 }
