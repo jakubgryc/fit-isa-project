@@ -58,13 +58,15 @@ bool UDPExporter::connect() {
     return true;
 }
 
-bool UDPExporter::sendFlows(std::queue<NetflowRecord> &exportCache, std::tuple<uint32_t, uint32_t, uint32_t> epochTuple,
+bool UDPExporter::sendFlows(std::queue<NetflowRecord> &exportCache, Timer &timer,
                             bool sendOnlyMAX) {
-    static int mess_sent = 0;
+    static uint32_t flowSequence = 0;
 
     while (!exportCache.empty() && (!sendOnlyMAX || exportCache.size() >= MAX_PACKETS)) {
         size_t totalFlows = exportCache.size();
         if (totalFlows > MAX_PACKETS) totalFlows = MAX_PACKETS;
+
+        std::tuple<uint32_t, uint32_t, uint32_t> epochTuple = timer.getEpochTuple();
 
         struct NetflowHeader header;
         header.version = htons(5);
@@ -72,7 +74,7 @@ bool UDPExporter::sendFlows(std::queue<NetflowRecord> &exportCache, std::tuple<u
         header.sysUptime = htonl(std::get<0>(epochTuple));
         header.unix_secs = htonl(std::get<1>(epochTuple));
         header.unix_nsecs = htonl(std::get<2>(epochTuple));
-        header.flowSequence = htonl(0);
+        header.flowSequence = htonl(flowSequence);
         header.engine_type = 0;
         header.engine_id = 0;
         header.sampling_interval = htons(0);
@@ -96,9 +98,9 @@ bool UDPExporter::sendFlows(std::queue<NetflowRecord> &exportCache, std::tuple<u
 
         if (bytes_tx < 0) {
             std::cerr << "error: failed to send data\n";
-        } else {
-            mess_sent++;
         }
+
+        flowSequence += totalFlows;
 
         delete[] buffer;
     }

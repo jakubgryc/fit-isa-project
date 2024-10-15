@@ -13,6 +13,7 @@
 #include <string>
 
 #include "Flow.h"
+#include "Tools.h"
 
 /**
  * @class UDPExporter
@@ -35,7 +36,7 @@ class UDPExporter {
     ~UDPExporter();
 
     bool connect();
-    bool sendFlows(std::queue<struct NetflowRecord> &exportCache, std::tuple<uint32_t, uint32_t, uint32_t> epochTuple,
+    bool sendFlows(std::queue<struct NetflowRecord> &exportCache, Timer &timer,
                    bool sendOnlyMAX);
     void printData();
 
