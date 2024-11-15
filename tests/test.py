@@ -10,16 +10,17 @@ import sys
 import subprocess
 import time
 import threading
+import numpy as np
+from datetime import datetime
+from zoneinfo import ZoneInfo
 from pathlib import Path
 from termcolor import colored, cprint
 from functools import wraps
 
 CREATE_JSON = False
 RUN_TESTS = False
-if "-c" in sys.argv:
-    CREATE_JSON = True
-if "-r" in sys.argv:
-    RUN_TESTS = True
+RUN_SOFTFLOWD = True
+
 
 EXPORTER_EXEC = "../p2nprobe"
 PCAP_DIR = Path("pcaps")
@@ -28,6 +29,16 @@ stop_thread = False
 message_data = {}
 test_cases = []
 total_success = 0
+
+def print_help():
+    print(
+    """
+Usage:
+python3 test.py [-c] [-r]
+
+-c: Create JSON files with the exported data
+-r: Run tests on the exported data
+    """)
 
 
 def test_case(func):
@@ -55,10 +66,19 @@ def parse_netflow_v5_header(data):
     return header
 
 
-def parse_netflow_v5_record(data):
+def parse_netflow_v5_record(data, timestamp):
     """Parse a NetFlow v5 flow record from the given data."""
+    timezone = ZoneInfo("Europe/Prague")
     record_fields = struct.unpack('!IIIHHIIIIHHBBBBHHBBH', data)
+
+    max32 = 2**32-1
+    first = np.uint32(record_fields[7])
+    timestamp_seconds = (timestamp - (max32 - first)) / 1000
+
+    dt_object = datetime.fromtimestamp(timestamp_seconds, tz=timezone)
+    formatted_time = dt_object.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
     record = {
+        'TimeStamp': formatted_time,
         'SrcAddr': socket.inet_ntoa(struct.pack('!I', record_fields[0])),
         'DstAddr': socket.inet_ntoa(struct.pack('!I', record_fields[1])),
         'NextHop': socket.inet_ntoa(struct.pack('!I', record_fields[2])),
@@ -112,13 +132,14 @@ def collector(host="127.0.0.1", port=9995):
     global stop_thread
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as udp_socket:
         udp_socket.bind((host, port))
-        udp_socket.settimeout(0.6)
+        udp_socket.settimeout(0.8)
         print(f"\nListening for NetFlow v5 packets on {host}:{port}")
 
         message_count = 0
         message_data = { "headers": {}, "records": {} }
         header_index = 0
         same_hash_idx = 1
+        flow_count = 0
         while not stop_thread:
             try:
                 data, addr = udp_socket.recvfrom(4096)
@@ -126,6 +147,8 @@ def collector(host="127.0.0.1", port=9995):
 
                 # Parse the header
                 header = parse_netflow_v5_header(data)
+                timestamp = header['UnixSecs']*1000 - header['SysUptime']+ header['UnixNsecs'] // 1000000
+                flow_count += header['Count']
                 header_dict = {f"header_{header_index}": header}
 
 
@@ -136,16 +159,16 @@ def collector(host="127.0.0.1", port=9995):
                 for i in range(num_records):
                     start = 24 + i * record_size
                     end = start + record_size
-                    record = parse_netflow_v5_record(data[start:end])
+                    record = parse_netflow_v5_record(data[start:end], timestamp)
                     
                     # Generate a unique hash key for the record
                     record_hash = generate_record_hash(record)
                     
                     # Store the record using the hash as the key
 
-                    if record_hash in records.keys():
-                        record_hash =  record_hash + f"_{same_hash_idx}"
-                        same_hash_idx += 1
+                    if record_hash in message_data["records"].keys():
+                        count = sum([1 for key in message_data["records"].keys() if key == record_hash or key.startswith(record_hash+"_")])
+                        record_hash =  record_hash + f"_{count}"
                     records[record_hash] = record
 
                 # Create message data with header and sorted records
@@ -157,6 +180,7 @@ def collector(host="127.0.0.1", port=9995):
                 header_index += 1
             except socket.timeout:
                 continue
+        print(f"\nTotal flows: {flow_count}")
 
 
 
@@ -280,8 +304,8 @@ def check_single_flow_duration(my_result_file, softflowd_result_file):
         log_failure("Different amount of flows in the two files")
         return
 
-    my_duration = [record['Duration'] for record in my_data["records"].values() if record['Packets'] == 1]
-    softflowd_duration = [record['Duration'] for record in softflowd_data["records"].values() if record['Packets'] == 1]
+    my_duration = [record['Duration'] for record in my_data["records"].values() if record['Packets'] != 1]
+    softflowd_duration = [record['Duration'] for record in softflowd_data["records"].values() if record['Packets'] != 1]
     err = 0
     for i, (my_packet, softflowd_packet) in enumerate(zip(my_duration, softflowd_duration)):
         if my_packet != softflowd_packet:
@@ -294,10 +318,57 @@ def check_single_flow_duration(my_result_file, softflowd_result_file):
         total_success += 1
 
 
+@test_case
+def check_tcp_flags(my_result_file, softflowd_result_file):
+    global total_success
+    with open(my_result_file) as f1, open(softflowd_result_file) as f2:
+        my_data = json.load(f1)
+        softflowd_data = json.load(f2)
+
+    if len(my_data["records"]) != len(softflowd_data["records"]):
+        log_failure("Different amount of flows in the two files")
+        return
+
+    my_tcp_flags = [record['TCPFlags'] for record in my_data["records"].values()]
+    softflowd_tcp_flags = [record['TCPFlags'] for record in softflowd_data["records"].values()]
+    for i, (my_packet, softflowd_packet) in enumerate(zip(my_tcp_flags, softflowd_tcp_flags)):
+        if my_packet != softflowd_packet:
+            log_failure(f"Octet amounts do not match at index {i}")
+            log_failure(f"My octet amount: {my_packet}, Softflowd octet amount: {softflowd_packet}")
+            return
+    log_success("SUCCESS")
+    total_success += 1
+
+
+
+@test_case
+def check_flow_sequence_in_header(my_result_file, softflowd_result_file):
+    global total_success
+    with open(my_result_file) as f1, open(softflowd_result_file) as f2:
+        my_data = json.load(f1)
+        softflowd_data = json.load(f2)
+
+    if len(my_data["headers"]) != len(softflowd_data["headers"]):
+        log_failure("Different total amount of headers (messages) sent")
+        log_failure(f"My amount: {len(my_data['headers'])}, softflowd amount: {len(softflowd_data['headers'])}")
+        return
+    my_flow_sequence = [header['FlowSequence'] for header in my_data["headers"].values()]
+    softflowd_flow_sequence = [header['FlowSequence'] for header in softflowd_data["headers"].values()]
+
+    for i, (my_packet, softflowd_packet) in enumerate(zip(my_flow_sequence, softflowd_flow_sequence)):
+        if my_packet != softflowd_packet:
+            log_failure(f"Flow sequence does not match at index {i}")
+            log_failure(f"My flow sequence: {my_packet}, Softflowd flow sequence: {softflowd_packet}")
+            return
+    total_success += 1
+    log_success("SUCCESS")
+
 
 
 def create_output():
     global stop_thread
+    global RUN_SOFTFLOWD
+    global message_data
      
     for pcap_file in PCAP_DIR.glob("*.pcap"):
         print("-" * 30)
@@ -307,17 +378,20 @@ def create_output():
         pcap_name = pcap_file.stem
 
         collector_process = run_collector()
-        time.sleep(0.1)
+        time.sleep(0.2)
 
         run_exporter(pcap_file)
 
-        time.sleep(0.1)
+        time.sleep(0.2)
 
         stop_thread = True
         collector_process.join()
         save_message_as_json(message_data, "myOut", pcap_name )
 
         stop_thread = False
+
+        if not RUN_SOFTFLOWD:
+            continue
 
         # Run the softflowd exporter
         print(colored(f"\nExporting data with softlowd", "yellow"))
@@ -366,11 +440,22 @@ def main():
     global CREATE_JSON
     global RUN_TESTS
     create_output() if CREATE_JSON else True
-    run_tests() if RUN_TESTS else True
+    run_tests() if (RUN_TESTS and RUN_SOFTFLOWD) else True
 
 
 
     
 
 if __name__ == "__main__":
+    if "-c" in sys.argv:
+        CREATE_JSON = True
+    if "-r" in sys.argv:
+        RUN_TESTS = True
+
+    if "-h" in sys.argv or "--help" in sys.argv:
+        print_help()
+        exit(0)
+
+    if "--no-softflowd" in sys.argv:
+        RUN_SOFTFLOWD = False
     main()
