@@ -15,13 +15,51 @@
 \usepackage{xurl}
 \usepackage{array, tabularx}
 
+% \usepackage{bera}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\colorlet{punct}{red!60!black}
+\definecolor{background}{HTML}{EEEEEE}
+\definecolor{delim}{RGB}{20,105,176}
+\colorlet{numb}{magenta!60!black}
+
+\lstdefinelanguage{json}{
+    basicstyle=\normalfont\ttfamily,
+    numbers=none,
+    numberstyle=\scriptsize,
+    stepnumber=1,
+    numbersep=8pt,
+    showstringspaces=false,
+    breaklines=true,
+    frame=lines,
+    backgroundcolor=\color{background},
+    %  *{0}{{{\color{numb}0}}}{1}
+    %   {1}{{{\color{numb}1}}}{1}
+    %   {2}{{{\color{numb}2}}}{1}
+    %   {3}{{{\color{numb}3}}}{1}
+    %   {4}{{{\color{numb}4}}}{1}
+    %   {5}{{{\color{numb}5}}}{1}
+    %   {6}{{{\color{numb}6}}}{1}
+    %   {7}{{{\color{numb}7}}}{1}
+    %   {8}{{{\color{numb}8}}}{1}
+    %   {9}{{{\color{numb}9}}}{1}
+    literate=
+      *{:}{{{\color{punct}{:}}}}{1}
+      {,}{{{\color{punct}{,}}}}{1}
+      {\{}{{{\color{delim}{\{}}}}{1}
+      {\}}{{{\color{delim}{\}}}}}{1}
+      {[}{{{\color{delim}{[}}}}{1}
+      {]}{{{\color{delim}{]}}}}{1},
+}
+
 
 \begin{document}
 
 \begin{sloppypar}
 \begin{titlepage}
 		\begin{center}
-			\includegraphics[width=0.85\linewidth]{./logo_cz.png} \\
+			\includegraphics[width=0.85\linewidth]{./figs/logo_cz.png} \\
 
 			\vspace{\stretch{0.382}}
 
@@ -68,8 +106,8 @@ Exportované záznamy se už přímo ukládají do struktury, která se pošle n
 
 \begin{figure}[ht]
     \begin{center}
-        \scalebox{0.9}{\includegraphics{./flowchart.drawio.pdf}}
-        \caption{Diagram zpracování paketů a~odesílání Netflow záznamů.}
+        \scalebox{0.9}{\includegraphics{./figs/flowchart.drawio.pdf}}
+        \caption{Diagram zpracování paketů a~odesílání Netflow záznamů mého exportéru.}
         \label{fig1}
     \end{center}
 \end{figure}
@@ -82,6 +120,7 @@ Třída UDPConnection slouží k~odesílání Netflow záznamů na kolektor. Po 
 
 Program je možné sestavit pomocí příkazu \texttt{make} v domovském adresáři projektu. Po sestavení je možné program spustit s~následujícími argumenty:
 
+\vspace{0.1cm}
 \texttt{
     ./p2nprobe <host>:<port> <pcap\_file> [-a <active\_timeout>] 
             [-i <inactive\_timeout>]
@@ -95,6 +134,59 @@ Program je možné sestavit pomocí příkazu \texttt{make} v domovském adresá
 \end{itemize}
 
 \section{Testování}
+Pro korektní testování bylo nutné obstarat si několik PCAP souborů. Pro testování základní funkčnosti exportéru jsem si vytvořil dva jednoduché programy v Pythonu, jeden sloužil jako TCP klient a druhý jako TCP server. Tyto programy jsem spustil a zachytil jejich komunikaci pomocí nástroje Wireshark, kterou jsem ukládal do PCAP souborů. Jejich implementace je dostupná v adresáři \texttt{tests/}, PCAP soubory v \texttt{tests/pcaps}. Implementoval jsem taktéž jednoduchý testovací skript \texttt{tests/test.py} v Pythonu, který obsahuje mnou implemntovaný kolektor. Tento skript pouští můj exportér a kolektor, který následně zpracovává přijaté záznamy a ukládá je do logů v adresáří \texttt{tests/logs}. Takto jsem byl schopen jednoduše ověřovat obsah záznamů, které exportér posílá.
+
+Logy z kolektoru jsou ve formátu JSON a obsahují dvě pole, \texttt{headers} a \texttt{records}. Pole \texttt{received} obsahuje hlavičky záznamů, které kolektor přijal, a pole \texttt{records} obsahuje samotné záznamy. Záznamy rovněž obsahují zpracovanou časovou značku, kdy byl záznam odeslán a délku trvání flowu, tyto hodnoty exportér neodesílá.
+
+% insert json example of log
+\begin{lstlisting}[language=json, caption={Ukázka logu z kolektoru}, label={lst1}]
+{
+    "headers": {
+        "header_0": {
+            "Version": 5,
+            "Count": 2,
+            "SysUptime": 0,
+            "UnixSecs": 1731704591,
+            "UnixNsecs": 808015000,
+            "FlowSequence": 0,
+            "EngineType": 0,
+            "EngineID": 0,
+            "SamplingInterval": 0
+        }
+    },
+    "records": {
+        "0184c1408f81a885a9bbdb50fc88065a": {
+            "Timestamp": "2024-10-14 00:38:17.370",
+            "SrcAddr": "127.0.0.1",
+            "DstAddr": "127.0.0.1",
+            "NextHop": "0.0.0.0",
+            "Input": 0,
+            "Output": 0,
+            "Packets": 4,
+            "Octets": 216,
+            "First": 1449472857,
+            "Last": 1449491651,
+            "Duration": 18794,
+            "SrcPort": 9119,
+            "DstPort": 14002,
+            "Padding": 0,
+            "TCPFlags": 19,
+            "Protocol": 6,
+            "Tos": 0,
+            "SrcAS": 0,
+            "DstAS": 0,
+            "SrcMask": 0,
+            "DstMask": 0,
+            "Padding2": 0
+        },
+        ...
+    }
+}
+
+\end{lstlisting}
+
+
+Program rovněž obsahuje několik testů, které pouští jak můj exportér, tak referenční exportér \texttt{softflowd} a porovnává jejich výstupy. Tyto testy lze spustit pomocí příkazu \texttt{python test.py -c -r}. Vzhledem k tomu, že referenční exportér má jinou implementaci, není možné jej plnohodně porovnávat s naším zadáním. Softflowd například nedokáže měnit časové limity, když načítá pakety ze souboru, taktéž řeší TCP fin a reset flagy. To v našem našem exportéru není zadáno. Testy tedy spíš slouží k porovnání jen se soubory, které obsahují malé množství záznamů, kdy se výstupy téměř vždy shodují.
 \section{Závěr}
 
 \bibliography{citations}
