@@ -17,9 +17,7 @@ FlowCache::FlowCache(Timer &timer) : timer(timer) {}
 
 void FlowCache::handleFlow(const Flow &flow, uint32_t packetSize, struct timeval packetTime) {
     
-    uint32_t packetTimestamp = timer.getTimeDifference(&packetTime, timer.getStartTime());
-    
-    checkForExpiredFlows(packetTimestamp);
+    checkForExpiredFlows(packetTime);
 
     std::string flowKey = getFlowKey(flow);
 
@@ -28,11 +26,11 @@ void FlowCache::handleFlow(const Flow &flow, uint32_t packetSize, struct timeval
     if (it == flowCache.end()) {
         // Flow not in flowcache, create a new one
         flowCache[flowKey] = std::make_shared<Flow>(flow);
-        flowCache[flowKey]->setFirst(packetTimestamp, flow.tcpFlags);
-        flowCache[flowKey]->update(packetSize, packetTimestamp);
+        flowCache[flowKey]->setFirst(packetTime, flow.tcpFlags);
+        flowCache[flowKey]->update(packetSize, packetTime);
     } else {
         // Flow is already in flowcache, update its information
-        it->second->update(packetSize, packetTimestamp);
+        it->second->update(packetSize, packetTime);
         it->second->tcpFlags |= flow.tcpFlags;
     }
 
@@ -48,8 +46,8 @@ void FlowCache::prepareToExport(std::shared_ptr<Flow> flow) {
     nfRecord.SNMPoutput = htons(0);
     nfRecord.totalPackets = htonl(flow->packetCount);
     nfRecord.totalBytes = htonl(flow->byteCount);
-    nfRecord.firstSeen = htonl(flow->startTime);
-    nfRecord.lastSeen = htonl(flow->lastSeenTime);
+    nfRecord.firstSeen = htonl(timer.getTimeDifference(&(flow->startTime), timer.getStartTime()));
+    nfRecord.lastSeen = htonl(timer.getTimeDifference(&(flow->lastSeenTime), timer.getStartTime()));
     nfRecord.srcPort = flow->srcPort;    // already in network order
     nfRecord.destPort = flow->destPort;  // already in network order
     nfRecord.pad1 = 0;
@@ -68,7 +66,7 @@ void FlowCache::prepareToExport(std::shared_ptr<Flow> flow) {
 void FlowCache::flushToExportAll() {
     std::map<uint32_t, std::vector<std::shared_ptr<Flow>>> exportMap;
     for (auto it = flowCache.begin(); it != flowCache.end();) {
-        exportMap[it->second->startTime].push_back(it->second);
+        exportMap[timer.getTimeDifference(&(it->second->startTime), timer.getStartTime())].push_back(it->second);
         it = flowCache.erase(it);
     }
 
@@ -80,7 +78,7 @@ void FlowCache::flushToExportAll() {
     }
 }
 
-void FlowCache::checkForExpiredFlows(uint32_t timestamp) {
+void FlowCache::checkForExpiredFlows(struct timeval timestamp) {
     std::map<uint32_t, std::vector<std::shared_ptr<Flow>>> exportMap;
     uint32_t expirationTime;
     for (auto it = flowCache.begin(); it != flowCache.end();) {

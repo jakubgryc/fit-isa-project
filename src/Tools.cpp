@@ -66,29 +66,37 @@ uint32_t Timer::getTimeDifference(struct timeval *t1, struct timeval *t2) {
     return ((uint32_t)res.tv_sec * 1000 + (uint32_t)res.tv_usec / 1000);
 }
 
-bool Timer::checkFlowTimeouts(uint32_t firstSeenTime, uint32_t lastSeenTime, uint32_t currentTime,
+bool Timer::checkFlowTimeouts(struct timeval firstSeenTime, struct timeval lastSeenTime, struct timeval currentTime,
                               uint32_t *expirationTime) {
     // The arguments are in milliseconds, the active and inactive timeouts are in seconds,
     // so we need to convert the timeouts to milliseconds
-    int64_t first = static_cast<int64_t>(firstSeenTime);
-    int64_t last = static_cast<int64_t>(lastSeenTime);
-    int64_t current = static_cast<int64_t>(currentTime);
-    int64_t activeT = static_cast<int64_t>(activeTimeout);
-    int64_t inactiveT = static_cast<int64_t>(inactiveTimeout);
-    int64_t expTimeActive;
-    int64_t expTimeInactive;
+    // int64_t first = static_cast<int64_t>(firstSeenTime);
+    // int64_t last = static_cast<int64_t>(lastSeenTime);
+    // int64_t current = static_cast<int64_t>(currentTime);
+    // int64_t activeT = static_cast<int64_t>(activeTimeout);
+    // int64_t inactiveT = static_cast<int64_t>(inactiveTimeout);
+    int32_t expTimeActive = 0;
+    int32_t expTimeInactive = 0;
     bool expired = false;
 
-    expTimeActive = (current - first) - activeT * 1000;
-    expTimeInactive = (current - last) - inactiveT * 1000;
+    // Correctly handle the expiration times
+    if ((currentTime.tv_sec - firstSeenTime.tv_sec > activeTimeout) ||
+        ((currentTime.tv_sec - firstSeenTime.tv_sec == activeTimeout) &&
+         (currentTime.tv_usec - firstSeenTime.tv_usec > 0L))) {
+        expired = true;
+        expTimeActive = getTimeDifference(&currentTime, &firstSeenTime);
+    }
 
-    if (expTimeActive > 0) expired = true;
-
-    if (expTimeInactive > 0) expired = true;
+    if ((currentTime.tv_sec - lastSeenTime.tv_sec > inactiveTimeout) ||
+        ((currentTime.tv_sec - lastSeenTime.tv_sec == inactiveTimeout) &&
+         (currentTime.tv_usec - lastSeenTime.tv_usec > 0L))) {
+        expired = true;
+        expTimeInactive = getTimeDifference(&currentTime, &lastSeenTime);
+    }
 
     // Handle the expiration time, if both active and inactive timeouts are expired, return the larger one
     *expirationTime =
-        expTimeActive > expTimeInactive ? static_cast<uint32_t>(expTimeActive) : static_cast<uint32_t>(expTimeInactive);
+        expTimeActive > expTimeInactive ? expTimeActive : expTimeInactive;
 
     return expired;
 }

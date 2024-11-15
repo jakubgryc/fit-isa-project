@@ -67,7 +67,7 @@ class Timer {
      * @param currentTime
      * @return true if either one of the timers are expired, resulting in sending the flow, in other case false
      */
-    bool checkFlowTimeouts(uint32_t firstSeenTime, uint32_t lastSeenTime, uint32_t currentTime,
+    bool checkFlowTimeouts(struct timeval firstSeenTime, struct timeval lastSeenTime, struct timeval currentTime,
                            uint32_t *expirationTime);
 
     struct timeval *getStartTime();

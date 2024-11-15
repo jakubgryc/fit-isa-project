@@ -73,7 +73,7 @@ class FlowCache {
      *
      * @param timestamp current timestamp
      */
-    void checkForExpiredFlows(uint32_t timestamp);
+    void checkForExpiredFlows(struct timeval timestamp);
 
     /**
      * @brief prepares the flow to be exported

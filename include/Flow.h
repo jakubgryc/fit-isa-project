@@ -13,6 +13,7 @@
 #include <ctime>
 #include <iostream>
 #include <string>
+#include <sys/time.h>
 
 /**
  * @class NetflowHeader
@@ -73,7 +74,7 @@ class Flow {
     uint16_t srcPort, destPort;
     uint8_t  tcpFlags;
     uint32_t packetCount, byteCount;
-    uint32_t startTime, lastSeenTime;
+    struct timeval startTime, lastSeenTime;
 
     /**
      * @brief Constructor for a Flow class
@@ -90,7 +91,7 @@ class Flow {
      *
      * @param packetTime 
      */
-    void setFirst(uint32_t packetTime, uint8_t tcpflgs);
+    void setFirst(struct timeval packetTime, uint8_t tcpflgs);
 
     /**
      * @brief Function to update the flow statistics
@@ -98,7 +99,7 @@ class Flow {
      * @param packetSize Packet size to be added to the flow
      * @param timestamp Current timestamp of the captured packet
      */
-    void update(uint32_t packetSize, uint32_t timestamp);
+    void update(uint32_t packetSize, struct timeval timestamp);
 
     /**
      * @brief Function to determine if the flow is inactive

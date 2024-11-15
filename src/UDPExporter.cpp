@@ -17,7 +17,6 @@ UDPExporter::UDPExporter(const std::string hostname, int port) : hostname(hostna
 UDPExporter::~UDPExporter() {
     if (sockfd != -1) {
         close(sockfd);
-        std::cout << "Socket closed\n";
     }
 }
 
