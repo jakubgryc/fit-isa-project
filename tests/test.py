@@ -10,7 +10,7 @@ import sys
 import subprocess
 import time
 import threading
-import numpy as np
+# import numpy as np
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from pathlib import Path
@@ -38,6 +38,7 @@ python3 test.py [-c] [-r]
 
 -c: Create JSON files with the exported data
 -r: Run tests on the exported data
+--no-softflowd: Do not run the softflowd exporter
     """)
 
 
@@ -72,13 +73,13 @@ def parse_netflow_v5_record(data, timestamp):
     record_fields = struct.unpack('!IIIHHIIIIHHBBBBHHBBH', data)
 
     max32 = 2**32-1
-    first = np.uint32(record_fields[7])
+    first = record_fields[7]
     timestamp_seconds = (timestamp - (max32 - first)) / 1000
 
     dt_object = datetime.fromtimestamp(timestamp_seconds, tz=timezone)
     formatted_time = dt_object.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
     record = {
-        'TimeStamp': formatted_time,
+        'Timestamp': formatted_time,
         'SrcAddr': socket.inet_ntoa(struct.pack('!I', record_fields[0])),
         'DstAddr': socket.inet_ntoa(struct.pack('!I', record_fields[1])),
         'NextHop': socket.inet_ntoa(struct.pack('!I', record_fields[2])),

@@ -7,6 +7,8 @@ OBJ_DIR = obj
 SRC = $(wildcard $(SRC_DIR)/*.cpp)
 OBJ = $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o, $(SRC))
 
+NAME = docs/doc
+
 TARGET = p2nprobe
 
 all: $(TARGET)
@@ -25,10 +27,26 @@ $(OBJ_DIR):
 
 # Clean up object files and executable
 clean:
-	rm -f $(OBJ_DIR)/*.o $(TARGET)
+	rm -f $(OBJ_DIR)/*.o $(TARGET) isa.zip
 
 test:
 	python tests/udp_server.py
 
+zip: clean
+	zip -r isa.zip Makefile include obj src tests
 
-.PHONY: all clean
+rsync: clean
+	rsync -aurv Makefile include obj src tests merlin:~/isa
+
+docs:
+	latex $(NAME).tex
+	bibtex $(NAME)
+	latex $(NAME).tex
+	latex $(NAME).tex
+	dvips -t a4 $(NAME).dvi
+	ps2pdf -sPAPERSIZE=a4 $(NAME).ps
+	rm -f $(NAME).{bbl,blg,brf,ps,log,out,aux,dvi}
+
+
+
+.PHONY: all clean docs
