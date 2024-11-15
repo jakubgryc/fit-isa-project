@@ -37,15 +37,44 @@ struct PcapData {
  */
 class PcapHandler {
    public:
+    /**
+     * @brief Construct a new Pcap Handler object
+     *
+     * @param pcapFile path to pcap file
+     */
     PcapHandler(std::string &pcapFile);
 
+    /**
+     * @brief Destroy the Pcap Handler object
+     *
+     */
     ~PcapHandler();
 
+    /**
+     * @brief Open pcap file
+     *
+     * @return true if file was opened
+     * @return false if file was not opened
+     */
     bool openPcap();
 
+    /**
+     * @brief Start the pcap handler
+     *
+     * @param connection exporter
+     * @param timer timer object for time handling
+     */
     void start(UDPExporter *connection, Timer &timer);
 
    private:
+    /**
+     * @brief Proccess packet, extract important data from packet
+     *
+     * @param header pcap header
+     * @param packet packet data
+     * @param pData pcap data to be filled
+     * @return int payload size
+     */
     int proccessPacket(const struct pcap_pkthdr *header, const u_char *packet, PcapData *pData);
 
     std::string filePath;

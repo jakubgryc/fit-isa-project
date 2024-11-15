@@ -70,7 +70,7 @@ bool UDPExporter::sendFlows(std::queue<NetflowRecord> &exportCache, Timer &timer
 
         struct NetflowHeader header;
         header.version = htons(5);
-        header.flowCount = htons(static_cast<uint32_t>(totalFlows));
+        header.flowCount = htons(static_cast<uint16_t>(totalFlows));
         header.sysUptime = htonl(std::get<0>(epochTuple));
         header.unix_secs = htonl(std::get<1>(epochTuple));
         header.unix_nsecs = htonl(std::get<2>(epochTuple));

@@ -1,6 +1,7 @@
 /**
- * @file tools.cpp
+ * @file Tools.cpp
  * @brief Helper tools containing argument parsing and handling time
+ * @author Jakub Gryc <xgrycj03>
  */
 
 #include "../include/Tools.h"
@@ -30,7 +31,8 @@ std::tuple<uint32_t, uint32_t, uint32_t> Timer::getEpochTuple() {
 
     gettimeofday(&currentTime, nullptr);
 
-    resTuple = std::make_tuple(getSysUptime(), currentTime.tv_sec, currentTime.tv_usec * 1000);
+    resTuple = std::make_tuple(getTimeDifference(&currentTime, &programStartTime), currentTime.tv_sec,
+                               currentTime.tv_usec * 1000);
     return resTuple;
 }
 
@@ -40,18 +42,28 @@ uint32_t Timer::getTimeDifference(struct timeval *t1, struct timeval *t2) {
     // uint32 overflow In that case it may not display the time properly
     //
     // When analysing the pcap timestamp, the time will be correct if only interpreted as signed integer, because
-    // the packet was captured in the past when compared to the run of this program.
-    uint32_t timeDiff_m;
-    int32_t seconds = t1->tv_sec - t2->tv_sec;
-    int32_t microseconds = t1->tv_usec - t2->tv_usec;
+    // the packet was captured in the past when compared to the current time.
+    // uint32_t timeDiff_m;
+    // int32_t seconds = t1->tv_sec - t2->tv_sec;
+    // int32_t microseconds = t1->tv_usec - t2->tv_usec;
+    //
+    // if (microseconds < 0) {
+    //     microseconds += 1000000L;
+    //     seconds--;
+    // }
+    //
+    // timeDiff_m = seconds * 1000 + microseconds / 1000;
+    // return timeDiff_m;
 
-    if (microseconds < 0) {
-        microseconds += 1000000L;
-        seconds--;
+    struct timeval res;
+
+    res.tv_sec = t1->tv_sec - t2->tv_sec;
+    res.tv_usec = t1->tv_usec - t2->tv_usec;
+    if (res.tv_usec < 0) {
+        res.tv_usec += 1000000L;
+        res.tv_sec--;
     }
-
-    timeDiff_m = seconds * 1000 + microseconds / 1000;
-    return timeDiff_m;
+    return ((uint32_t)res.tv_sec * 1000 + (uint32_t)res.tv_usec / 1000);
 }
 
 bool Timer::checkFlowTimeouts(uint32_t firstSeenTime, uint32_t lastSeenTime, uint32_t currentTime,
@@ -74,13 +86,12 @@ bool Timer::checkFlowTimeouts(uint32_t firstSeenTime, uint32_t lastSeenTime, uin
 
     if (expTimeInactive > 0) expired = true;
 
+    // Handle the expiration time, if both active and inactive timeouts are expired, return the larger one
     *expirationTime =
         expTimeActive > expTimeInactive ? static_cast<uint32_t>(expTimeActive) : static_cast<uint32_t>(expTimeInactive);
 
     return expired;
 }
-
-void Timer::printStartTime() { std::cout << "start time is: " << programStartTime.tv_sec << std::endl; }
 
 struct timeval *Timer::getStartTime() { return &programStartTime; }
 

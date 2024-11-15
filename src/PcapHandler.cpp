@@ -14,16 +14,8 @@
 
 #include "../include/Flow.h"
 
-/**
- * @brief PcapHandler constructor
- *
- * @param pcapFile PCAP source file
- */
 PcapHandler::PcapHandler(std::string &pcapFile) : filePath(pcapFile), handle(nullptr) {}
 
-/**
- * @brief PcapHandler destroyer
- */
 PcapHandler::~PcapHandler() {
     if (handle) {
         pcap_close(handle);
@@ -55,13 +47,14 @@ void PcapHandler::start(UDPExporter *exporter, Timer &timer) {
 
     int payloadSize = 0;
 
+    // The main loop of the program
     while ((packet = pcap_next(handle, &header)) != nullptr) {
         memset(&pcapData, 0, sizeof(struct PcapData));
         payloadSize = proccessPacket(&header, packet, &pcapData);
 
         if (payloadSize != -1) {
             if (flowCache.exportCacheFull()) {
-                // export to collector
+                // export to collector if there are 30 or more expired flows
                 exporter->sendFlows(flowCache.getExportCache(), timer, true);
             }
 

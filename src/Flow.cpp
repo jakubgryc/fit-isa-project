@@ -19,7 +19,7 @@ Flow::Flow(uint32_t srcIP, uint32_t destIP, uint16_t srcPort, uint16_t destPort,
 }
 
 void Flow::setFirst(uint32_t packetTime, uint8_t tcpflgs) {
-    clear();
+    this->clear();
     startTime = packetTime;
     tcpFlags = tcpflgs;
 }

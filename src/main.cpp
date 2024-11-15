@@ -8,7 +8,6 @@
 
 #include <iostream>
 
-#include "../include/Flow.h"
 #include "../include/PcapHandler.h"
 #include "../include/Tools.h"
 #include "../include/UDPExporter.h"
@@ -21,6 +20,9 @@ int main(int argc, char *argv[]) {
     }
 
     UDPExporter *exporter = new UDPExporter(args.hostname, args.port);
+    
+    // Create a timer object with the active and inactive timeout values
+    // Upon creation, the timer will calculate the current time to be used as the start time
     Timer timer(args.active_timeout, args.inactive_timeout);
 
     if (!exporter->connect()) {

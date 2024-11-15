@@ -1,3 +1,8 @@
+/**
+ * @file Tools.h
+ * @brief Helper tools containing argument parsing and handling time
+ * @author Jakub Gryc <xgrycj03>
+ */
 
 #ifndef TOOLS_H
 #define TOOLS_H
@@ -6,6 +11,7 @@
 
 #include <cstdint>
 #include <string>
+#include <tuple>
 
 struct Arguments {
     std::string hostname;
@@ -53,19 +59,18 @@ class Timer {
      */
     uint32_t getTimeDifference(struct timeval *t1, struct timeval *t2);
 
-    struct timeval *getStartTime();
-
     /**
      * @brief Function to determine if the flow has extended either the active or inactive timeour
      *
-     * @param firstSeenTime 
-     * @param lastSeenTime 
-     * @param currentTime 
+     * @param firstSeenTime
+     * @param lastSeenTime
+     * @param currentTime
      * @return true if either one of the timers are expired, resulting in sending the flow, in other case false
      */
-    bool checkFlowTimeouts(uint32_t firstSeenTime, uint32_t lastSeenTime, uint32_t currentTime, uint32_t *expirationTime);
+    bool checkFlowTimeouts(uint32_t firstSeenTime, uint32_t lastSeenTime, uint32_t currentTime,
+                           uint32_t *expirationTime);
 
-    void printStartTime();
+    struct timeval *getStartTime();
 
    private:
     struct timeval programStartTime;
@@ -84,7 +89,7 @@ void print_err();
  * @param argc
  * @param argv
  * @param args Argument structure to hold the argument information
- * @return
+ * @return true if the arguments are parsed correctly, false otherwise
  */
 bool parse_arguments(int argc, char *argv[], Arguments *args);
 
