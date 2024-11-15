@@ -112,6 +112,16 @@ Exportované záznamy se už přímo ukládají do struktury, která se pošle n
     \end{center}
 \end{figure}
 
+Díky tomuto přístupu jsou záznamy odesílány na kolektor seřazené vzestupně podle časové značku prvního paketu daného flowu, jak lze vidět na obrázku \ref{fig2}.
+
+\begin{figure}[!ht]
+    \begin{center}
+        \scalebox{0.35}{\includegraphics{./figs/nfdump.pdf}}
+        \caption{Ukázka seřazených záznamů pomocí nástroje nfdump. Použit byl soubor \texttt{tests/pcaps/test8.pcap}.}
+        \label{fig2}
+    \end{center}
+\end{figure}
+
 
 \subsection{UDP spojení}
 Třída UDPConnection slouží k~odesílání Netflow záznamů na kolektor. Po své inicializaci se vytvoří socket, který je následně využíván pro odesílání záznamů. Metoda \texttt{UDPConnection::sendFlows()} odesílá postupně jednotlivé záznamy na kolektor v Netflow v5 formátu \cite{netflow5}. Pokud ještě nedošlo ke zpracování všech paketů ze souboru, tak se záznamy odesílají jen po 30 záznamech, které byly již exportovány do \verb|exportCache|. Pokud jich je méně, tak se záznamy neposílají a čeká se na naplnění fronty na alespoň 30 záznamů. Pokud se zpracovaly všechny pakety, tak se záznamy posílají všechny, i když jich je méně než 30, postupně po 30.
@@ -187,7 +197,6 @@ Logy z kolektoru jsou ve formátu JSON a obsahují dvě pole, \texttt{headers} a
 
 
 Program rovněž obsahuje několik testů, které pouští jak můj exportér, tak referenční exportér \texttt{softflowd} a porovnává jejich výstupy. Tyto testy lze spustit pomocí příkazu \texttt{python test.py -c -r}. Vzhledem k tomu, že referenční exportér má jinou implementaci, není možné jej plnohodně porovnávat s naším zadáním. Softflowd například nedokáže měnit časové limity, když načítá pakety ze souboru, taktéž řeší TCP fin a reset flagy. To v našem našem exportéru není zadáno. Testy tedy spíš slouží k porovnání jen se soubory, které obsahují malé množství záznamů, kdy se výstupy téměř vždy shodují.
-\section{Závěr}
 
 \bibliography{citations}
 \bibliographystyle{czechiso}
