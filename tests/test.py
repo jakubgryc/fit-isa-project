@@ -133,8 +133,8 @@ def collector(host="127.0.0.1", port=9995):
     global stop_thread
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as udp_socket:
         udp_socket.bind((host, port))
-        udp_socket.settimeout(0.8)
-        print(f"\nListening for NetFlow v5 packets on {host}:{port}")
+        udp_socket.settimeout(4.5)
+        # print(f"\nListening for NetFlow v5 packets on {host}:{port}")
 
         message_count = 0
         message_data = { "headers": {}, "records": {} }
@@ -144,7 +144,7 @@ def collector(host="127.0.0.1", port=9995):
         while not stop_thread:
             try:
                 data, addr = udp_socket.recvfrom(4096)
-                print(f"\nReceived {len(data)} bytes from {addr}")
+                # print(f"\nReceived {len(data)} bytes from {addr}")
 
                 # Parse the header
                 header = parse_netflow_v5_header(data)
@@ -311,12 +311,14 @@ def check_single_flow_duration(my_result_file, softflowd_result_file):
     for i, (my_packet, softflowd_packet) in enumerate(zip(my_duration, softflowd_duration)):
         if my_packet != softflowd_packet:
             err += 1
-            log_failure(f"Duration does not match at index {i}")
-            log_failure(f"My duration amount: {my_packet}, Softflowd duration amount: {softflowd_packet}")
+            # log_failure(f"Duration does not match at index {i}")
+            # log_failure(f"My duration amount: {my_packet}, Softflowd duration amount: {softflowd_packet}")
             # return
     if err == 0:
         log_success("SUCCESS")
         total_success += 1
+    else:
+        log_failure(f"Errors: {err}")
 
 
 @test_case
@@ -379,11 +381,11 @@ def create_output():
         pcap_name = pcap_file.stem
 
         collector_process = run_collector()
-        time.sleep(0.2)
+        time.sleep(0.4)
 
         run_exporter(pcap_file)
 
-        time.sleep(0.2)
+        time.sleep(0.4)
 
         stop_thread = True
         collector_process.join()
