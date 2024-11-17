@@ -7,27 +7,22 @@ OBJ_DIR = obj
 SRC = $(wildcard $(SRC_DIR)/*.cpp)
 OBJ = $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o, $(SRC))
 
-NAME = docs/doc
 
-TARGET = p2nprobe
 
 all: $(TARGET)
 
-# Rule to link the object files and create the executable
 $(TARGET): $(OBJ)
 	$(CXX) $(CXXFLAGS) -o $(TARGET) $(OBJ)
 
-# Rule to compile each source file into an object file in obj directory
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp | $(OBJ_DIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-# Rule to create the object directory if it doesn't exist
 $(OBJ_DIR):
 	mkdir -p $(OBJ_DIR)
 
-# Clean up object files and executable
+# Clean up 
 clean:
-	rm -f $(OBJ_DIR)/*.o $(TARGET) isa.zip
+	rm -f $(OBJ_DIR)/*.o $(TARGET) xgrycj03.tar
 
 test:
 	python tests/udp_server.py
@@ -37,6 +32,9 @@ zip: clean
 
 rsync: clean
 	rsync -aurv Makefile include obj src tests merlin:~/isa
+
+pack: clean
+	tar -cf xgrycj03.tar Makefile include src manual.pdf
 
 docs:
 	latex $(NAME).tex
@@ -49,4 +47,4 @@ docs:
 
 
 
-.PHONY: all clean docs
+.PHONY: all clean docs pack
