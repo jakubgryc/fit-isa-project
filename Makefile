@@ -26,14 +26,6 @@ $(OBJ_DIR):
 clean:
 	rm -f $(OBJ_DIR)/*.o $(TARGET) xgrycj03.tar
 
-test:
-	python tests/udp_server.py
-
-zip: clean
-	zip -r isa.zip Makefile include obj src tests
-
-rsync: clean
-	rsync -aurv Makefile include obj src tests merlin:~/isa
 
 pack: clean
 	tar -cf xgrycj03.tar obj Makefile include src manual.pdf README tests/*.py tests/logs/myOut_test3.json tests/pcaps/test*.pcap docs/*
