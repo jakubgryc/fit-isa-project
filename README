@@ -49,7 +49,7 @@ include/         # Hlavičkové soubory
 
 obj/         # Sestavené objektové soubory vytvořené při překladu
 
-tests/                      # Unit tests
+tests/                      # Složka s testy
 ├── client.py
 ├── server.py
 ├── test.py                 # Skript pro spuštění testů
