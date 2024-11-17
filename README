@@ -6,7 +6,10 @@
 ## Datum: 2024-11-17
 
 ### Popis projektu
-Jedná se o implementaci NetFlow v5 exportéru v jazyce C++, který zpracovává PCAP soubory. Program pakety postupně načítá a agreguje je podle specifikace Netflow v5 do toků. Program zpracovává pouze TCP toky a řeší jen aktivní a neaktivní časové limity. Jednotlivé toky pak následně posílá pomocí UDP zpráv na kolektor.
+Jedná se o implementaci NetFlow v5 exportéru v jazyce C++, který zpracovává PCAP soubory. 
+Program pakety postupně načítá a agreguje je podle specifikace Netflow v5 do toků. 
+Zpracovávájí se pouze TCP toky a řeší jen aktivní a neaktivní časové limity. 
+Jednotlivé toky pak následně posílá pomocí UDP zpráv na kolektor.
 
 Projekt splňuje všechny požadavky zadání.
 
