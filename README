@@ -56,8 +56,9 @@ tests/                      # Unit tests
 ├── pcaps/                  # Testovací PCAP soubory
 │   ├── test.pcap
 │   ├── test2.pcap
+│   ├── test3.pcap
 ├── logs/                   # Logy testů
-│   ├── myOut_test2.json    # Příklad výstupu testu
+│   ├── myOut_test3.json    # Příklad výstupu testu
 
 docs/                       # Zdrojové soubory dokumentace
 ├── doc.tex

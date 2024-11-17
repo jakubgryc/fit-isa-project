@@ -125,7 +125,7 @@ Díky tomuto přístupu jsou záznamy odesílány na kolektor seřazené vzestup
 \begin{figure}[!ht]
     \begin{center}
         \scalebox{0.35}{\includegraphics{./figs/nfdump.pdf}}
-        \caption{Ukázka seřazených záznamů pomocí nástroje nfdump a nfcapd. Použitý soubor s~paketama se nachází v~\texttt{tests/pcaps/test8.pcap}.}
+        \caption{Ukázka seřazených záznamů pomocí nástroje nfdump a nfcapd. Použitý soubor s~paketama se nachází v~\texttt{tests/pcaps/test3.pcap}.}
         \label{fig2}
     \end{center}
 \end{figure}
@@ -157,15 +157,15 @@ Pro korektní testování bylo nutné obstarat si několik PCAP souborů. Pro te
 Logy z~kolektoru jsou ve formátu JSON a obsahují dvě pole, \texttt{headers} a \texttt{records}. Pole \texttt{received} obsahuje hlavičky záznamů, které kolektor přijal, a pole \texttt{records} obsahuje samotné záznamy. Příklad jednotlivého logu je v~(\ref{lst1}). Záznamy rovněž obsahují zpracovanou časovou značku, kdy byl záznam odeslán a délku trvání toku, tyto hodnoty exportér neodesílá.
 
 % insert json example of log
-\begin{lstlisting}[language=json, caption={Ukázka logu z~kolektoru}, label={lst1}]
+\begin{lstlisting}[language=json, caption={Ukázka logu z~kolektoru ze~souboru \texttt{tests/logs/myOyt\_test3.json}}, label={lst1}]
 {
     "headers": {
         "header_0": {
             "Version": 5,
-            "Count": 2,
+            "Count": 24,
             "SysUptime": 0,
-            "UnixSecs": 1731704591,
-            "UnixNsecs": 808015000,
+            "UnixSecs": 1731878557,
+            "UnixNsecs": 862007000,
             "FlowSequence": 0,
             "EngineType": 0,
             "EngineID": 0,
@@ -173,22 +173,22 @@ Logy z~kolektoru jsou ve formátu JSON a obsahují dvě pole, \texttt{headers} a
         }
     },
     "records": {
-        "0184c1408f81a885a9bbdb50fc88065a": {
-            "Timestamp": "2024-10-14 00:38:17.370",
-            "SrcAddr": "127.0.0.1",
-            "DstAddr": "127.0.0.1",
+        "01d46cd38e206a041c092d10852832a5": {
+            "Timestamp": "2024-10-13 23:30:27.063",
+            "SrcAddr": "147.229.192.94",
+            "DstAddr": "100.64.199.83",
             "NextHop": "0.0.0.0",
             "Input": 0,
             "Output": 0,
-            "Packets": 4,
-            "Octets": 216,
-            "First": 1449472857,
-            "Last": 1449491651,
-            "Duration": 18794,
-            "SrcPort": 9119,
-            "DstPort": 14002,
+            "Packets": 1,
+            "Octets": 52,
+            "First": 1271436496,
+            "Last": 1271436496,
+            "Duration": 0,
+            "SrcPort": 42650,
+            "DstPort": 1716,
             "Padding": 0,
-            "TCPFlags": 19,
+            "TCPFlags": 16,
             "Protocol": 6,
             "Tos": 0,
             "SrcAS": 0,
