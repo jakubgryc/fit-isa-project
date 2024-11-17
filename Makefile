@@ -36,7 +36,7 @@ rsync: clean
 	rsync -aurv Makefile include obj src tests merlin:~/isa
 
 pack: clean
-	tar -cf xgrycj03.tar Makefile include src manual.pdf
+	tar -cf xgrycj03.tar Makefile include src manual.pdf README tests/*.py tests/logs/myOut_test3.json tests/pcaps/test*.pcap
 
 docs:
 	latex $(NAME).tex
