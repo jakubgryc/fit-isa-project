@@ -53,7 +53,6 @@ class UDPExporter {
      */
     bool sendFlows(std::queue<struct NetflowRecord> &exportCache, Timer &timer,
                    bool sendOnlyMAX);
-    void printData();
 
    private:
     /**

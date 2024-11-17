@@ -106,7 +106,3 @@ bool UDPExporter::sendFlows(std::queue<NetflowRecord> &exportCache, Timer &timer
     return true;
 }
 
-void UDPExporter::printData() {
-    std::cout << "hostname is: |" << hostname << "|\n";
-    std::cout << "port is: |" << port << "|\n";
-}
