@@ -54,12 +54,10 @@ tests/                      # Unit tests
 ├── server.py
 ├── test.py                 # Skript pro spuštění testů
 ├── pcaps/                  # Testovací PCAP soubory
-│   ├── many1.pcap
-│   ├── many2.pcap
-│   ├── many3.pcap
-│   ├── test11.pcap
+│   ├── test.pcap
+│   ├── test2.pcap
 ├── logs/                   # Logy testů
-│   ├── myOut_many1.json    # Příklad výstupu testu
+│   ├── myOut_test2.json    # Příklad výstupu testu
 
 docs/                       # Zdrojové soubory dokumentace
 ├── doc.tex
