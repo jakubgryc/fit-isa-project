@@ -25,7 +25,7 @@
 \colorlet{numb}{magenta!60!black}
 
 \lstdefinelanguage{json}{
-    basicstyle=\normalfont\ttfamily,
+    basicstyle=\fontsize{10}{12}\normalfont\ttfamily,
     numbers=none,
     numberstyle=\scriptsize,
     stepnumber=1,
@@ -87,19 +87,27 @@
 \section{Úvod}
 
 Cílem projektu bylo vytvořit aplikaci, která bude schopna zpracovávat soubory ve formátu PCAP a~na základě těchto souborů generovat Netflow záznamy ve verzi 5. Tyto záznamy jsou následně posílány pomocí transportního protokolu UDP na kolektor. Aplikace je napsána v~jazyce C++ a~využívá knihovnu \texttt{libpcap} pro zpracování PCAP souborů.
+
+\section{Monitorování síťového provozu - Netflow}
+Monitorování siťového provozu je nezbytnou součástí správy sítí. Jedním z~principů takového monitorování je agragace podobných síťových paketů do toků, tzv. flowů. Tok je definován jako množina paketů, které sdílejí stejné atributy, v~našem případě zdrojové a cílové IP adresy, porty a transportní protokol. V~naší implementaci se řeší jen záznamy o~TCP tocích. Vzhledem k~tomu, že tyto hodnoty tvoří uspořádanou množinu ve~tvaru \texttt{<src\_ip, src\_port, dst\_ip, dst\_port, protocol>}, dva pakety se zaměněnými IP adresami a~porty tvoří dva různé toky. Tyto pakety se následně agregují do toků, které shromažďují další důležité informace, jako celkový počet bytů, počet paketů, čas prvního a posledního záznamu v~toku a další. Exportér, kterým tyto pakety prochází (typicky se jedná o~směrovač), postupně tyto toky exportuje dále na kolektor, který jej zpracovává dále \cite{flows}.
+
+Důležitou součástí je rovněž princip, kdy se jednotlivé toky exportují. Bylo by neefektivní posílat každý záznam například až tehdy, kdy se TCP spojení ukončí \cite{TCP}. UDP spojení navíc žádné aktivní připojení dvou stran nezajišťuje \cite{UDP}. Toto řeší hlídání časových limitů, kdy se záznamy exportují po určité době. V~naší implementaci se jedná o~aktivní a neaktivní časový limit. Aktivní časový limit exportuje záznam, pokud od prvního záznamu v~toku uplynul stanovený časový limit. Například u~dlouhých spojení, kdy se stahují velké soubory a~spojení trvá v~řádech desítkach minut či hodin, je žádoucí, aby se záznamy exportovaly průběžně, nikoliv až jeho uplynutí. Zároveň se řeší neaktivní časový limit. Záznam o~toku se tedy exportuje tehdy, když od posledního paketu v~daném toku nepřišel po stanovenou dobu žádný další paket, patřící do daného toku \cite{flows}.
+
+Poslané záznamy protokolu Netflow v5 mají stanovený formát. Obsahují hlavičku a informace o~záznamech. Jejich formát je popsán v~\cite{netflow5}.
+
 \section{Návrh a~implementace}
 
 Aplikace je rozdělena do několika tříd a souborů, které vzájemně spolupracují. Veškeré zdrojové soubory jsou umístěny v~adresáři \texttt{src/}. Některé důležité třídy a~jejich metody jsou popsány v~následujících podkapitolách.
 \subsection{Vstupní bod programu, main.cpp}
-Soubor \texttt{main.cpp} obsahuje vstupní bod programu. V~této části se zpracovávají argumenty a inicializují se hlavní třídy programu. Jedna z těchto tříd je třída Timer, která si po své inicializaci uloží časovou značku, která je nadále využívána pro výpočet relativního času v~Netflow záznamech. Dále se zde inicializuje třída UDPConnection, která obstarává posílaní UDP zpráv na kolektor. Poslední třídou, která je zde inicializována, je třída PcapHandler, která slouží jako hlavní jádro celé aplikace, jejíž účel je popsán v další podkapitole.
+Soubor \texttt{main.cpp} obsahuje vstupní bod programu. V~této části se zpracovávají argumenty a inicializují se hlavní třídy programu. Jedna z~těchto tříd je třída Timer, která si po své inicializaci uloží časovou značku, která je nadále využívána pro výpočet relativního času v~Netflow záznamech. Dále se zde inicializuje třída UDPConnection, která obstarává posílaní UDP zpráv na kolektor. Poslední třídou, která je zde inicializována, je třída PcapHandler, která slouží jako hlavní jádro celé aplikace, jejíž účel je popsán v~další podkapitole.
 \subsection{Zpracování paketů - PcapHandler}
-Hlavní jádro programu se nachází ve třídě PcapHandler. Po své inicializaci otevře PCAP soubor a~postupně zpracovává jednotlivé pakety. Metoda \texttt{PcapHandler::start()} inicializuje instanci třídy FlowCache, která slouží jako rozhraní pro ukládání a manipulování s uloženými Netflow záznamy. Následně se iteruje přes každý paket v~PCAP souboru a~volá se metoda \texttt{PcapHandler::processPacket()}, která zpracovává jednotlivé pakety a relevantní informace z~nich ukládá do FlowCache. Po zpracování všech paketů se zavolá metoda \texttt{PcapHandler::sendFlows()}, která postupně prochází všechny uložené Netflow záznamy a~tyto záznamy odesílá na kolektor pomocí třídy UDPConnection. Pokud vypršel aktivní či neaktivní časový limit pro 30 a více záznamů, tak se tyto záznamy po 30 mohou na kolektor odeslat ještě dříve, než se zpracují všechny pakety v~PCAP souboru. Tato funkcionalita je více popsána později viz \ref{timelimits}.
+Hlavní jádro programu se nachází ve třídě PcapHandler. Po své inicializaci otevře PCAP soubor a~postupně zpracovává jednotlivé pakety. Metoda \texttt{PcapHandler::start()} inicializuje instanci třídy FlowCache, která slouží jako rozhraní pro ukládání a manipulování s~uloženými Netflow záznamy. Následně se iteruje přes každý paket v~PCAP souboru a~volá se metoda \texttt{PcapHandler::processPacket()}, která zpracovává jednotlivé pakety a relevantní informace z~nich ukládá do FlowCache. Po zpracování všech paketů se zavolá metoda \texttt{PcapHandler::sendFlows()}, která postupně prochází všechny uložené Netflow záznamy a~tyto záznamy odesílá na kolektor pomocí třídy UDPConnection. Pokud vypršel aktivní či neaktivní časový limit pro~30 a více záznamů, tak se tyto záznamy po 30 mohou na kolektor odeslat ještě dříve, než se zpracují všechny pakety v~PCAP souboru. Tato funkcionalita je více popsána později viz \ref{timelimits}.
 
 \subsection{Zpracování netflow záznamů - FlowCache}
-Tato třída uchovává jednotlivé záznamy ve formě hash tabulky. Každý záznam je identifikován pomocí klíče, který je složen ze zdrojové IP adresy a portu a cílové IP adresy a portu. Transportní protokol se neukládá, jelikož aplikace řeší jen záznamy o TCP tocích. Hodnoty v této tabulce pak tvoří struktura Flow, která obsahuje informace jako počet bytů, počet paketů, čas prvního a posledního záznamu a další. Třídy FlowCache a Flow obsahují metody pro přidání nového záznamu, aktualizaci stávajícího záznamu či odeslání všech záznamů na kolektor.
+Tato třída uchovává jednotlivé záznamy ve formě hash tabulky. Každý záznam je identifikován pomocí klíče, který je složen ze zdrojové IP adresy a portu a cílové IP adresy a portu. Transportní protokol se neukládá, jelikož aplikace řeší jen záznamy o~TCP tocích. Hodnoty v~této tabulce pak tvoří struktura Flow, která obsahuje informace jako počet bytů, počet paketů, čas prvního a posledního záznamu a další. Třídy FlowCache a Flow obsahují metody pro přidání nového záznamu, aktualizaci stávajícího záznamu či odeslání všech záznamů na~kolektor.
 
 \subsubsection*{Časové limity} \label{timelimits}
-Důležitou součástí je hlídání časových limitů pro jednotlivé záznamy. Před každou aktualizací FlowCache se kontroluje, zda jednotlivým záznamům nevypršel časový limit. Veškeré expirované záznamy se odstraní z tabulky a přiřadí do fronty \verb|exportCache|. Do fronty se záznamy přidávají vždy podle toho, jak dlouho je záznam expirovaný. Nejdéle expirované záznamy se do fronty přidávají jako první, jak je popsáno v  \cite{flows}, sekce V-C, aby byly poslány dříve. Funkcionalitu zajišťuje metoda \texttt{FlowCache::checkForExpiredFlows()}.
+Důležitou součástí je hlídání časových limitů pro jednotlivé záznamy. Před každou aktualizací FlowCache se kontroluje, zda jednotlivým záznamům nevypršel časový limit. Veškeré expirované záznamy se odstraní z~tabulky a přiřadí do fronty \verb|exportCache|. Do fronty se záznamy přidávají vždy podle toho, jak dlouho je záznam expirovaný. Nejdéle expirované záznamy se do fronty přidávají jako první, jak je popsáno v~\cite{flows}, sekce V-C, aby byly poslány dříve. Funkcionalitu zajišťuje metoda \texttt{FlowCache::checkForExpiredFlows()}.
 
 Exportované záznamy se už přímo ukládají do struktury, která se pošle na kolektor. Je zajištěno správné pořadí bytů a~tedy jejich konverze do síťového bytového pořadí.
 
@@ -112,23 +120,23 @@ Exportované záznamy se už přímo ukládají do struktury, která se pošle n
     \end{center}
 \end{figure}
 
-Díky tomuto přístupu jsou záznamy odesílány na kolektor seřazené vzestupně podle časové značku prvního paketu daného flowu, jak lze vidět na obrázku \ref{fig2}.
+Díky tomuto přístupu jsou záznamy odesílány na kolektor seřazené vzestupně podle časové značku prvního paketu daného toku, jak lze vidět na obrázku \ref{fig2}.
 
 \begin{figure}[!ht]
     \begin{center}
         \scalebox{0.35}{\includegraphics{./figs/nfdump.pdf}}
-        \caption{Ukázka seřazených záznamů pomocí nástroje nfdump. Použit byl soubor \texttt{tests/pcaps/test8.pcap}.}
+        \caption{Ukázka seřazených záznamů pomocí nástroje nfdump a nfcapd. Použitý soubor s~paketama se nachází v~\texttt{tests/pcaps/test8.pcap}.}
         \label{fig2}
     \end{center}
 \end{figure}
 
 
 \subsection{UDP spojení}
-Třída UDPConnection slouží k~odesílání Netflow záznamů na kolektor. Po své inicializaci se vytvoří socket, který je následně využíván pro odesílání záznamů. Metoda \texttt{UDPConnection::sendFlows()} odesílá postupně jednotlivé záznamy na kolektor v Netflow v5 formátu \cite{netflow5}. Pokud ještě nedošlo ke zpracování všech paketů ze souboru, tak se záznamy odesílají jen po 30 záznamech, které byly již exportovány do \verb|exportCache|. Pokud jich je méně, tak se záznamy neposílají a čeká se na naplnění fronty na alespoň 30 záznamů. Pokud se zpracovaly všechny pakety, tak se záznamy posílají všechny, i když jich je méně než 30, postupně po 30.
+Třída UDPConnection slouží k~odesílání Netflow záznamů na kolektor. Po své inicializaci se vytvoří socket, který je následně využíván pro odesílání záznamů. Metoda \texttt{UDPConnection::sendFlows()} odesílá postupně jednotlivé záznamy na kolektor v~Netflow v5 formátu \cite{netflow5}. Pokud ještě nedošlo ke zpracování všech paketů ze souboru, tak se záznamy odesílají jen po 30 záznamech, které byly již exportovány do \verb|exportCache|. Pokud jich je méně, tak se záznamy neposílají a čeká se na naplnění fronty na alespoň 30 záznamů. Pokud se zpracovaly všechny pakety, tak se záznamy posílají všechny, i když jich je méně než 30, postupně po 30.
 
 \section{Návod k~použití}
 
-Program je možné sestavit pomocí příkazu \texttt{make} v domovském adresáři projektu. Po sestavení je možné program spustit s~následujícími argumenty:
+Program je možné sestavit pomocí příkazu \texttt{make} v~domovském adresáři projektu. Po sestavení je možné program spustit s~následujícími argumenty:
 
 \vspace{0.1cm}
 \texttt{
@@ -138,18 +146,18 @@ Program je možné sestavit pomocí příkazu \texttt{make} v domovském adresá
 
 \begin{itemize}
     \item \texttt{<host>:<port>} - povinný argument, který určuje IP adresu a port, na kterých kolektor běží.
-    \item \texttt{<pcap\_file>} - povinný argument, který určuje cestu k PCAP souboru, který se analyzuje.
+    \item \texttt{<pcap\_file>} - povinný argument, který určuje cestu k~PCAP souboru, který se analyzuje.
     \item \texttt{-a <active\_timeout>} - nepovinný argument, který určuje časový limit pro aktivní timeout. Výchozí hodnota je 60 sekund.
     \item \texttt{-i <incative\_timeout>} - nepovinný argument, který určuje časový limit pro neaktivní timeout. Výchozí hodnota je 60 sekund.
 \end{itemize}
 
 \section{Testování}
-Pro korektní testování bylo nutné obstarat si několik PCAP souborů. Pro testování základní funkčnosti exportéru jsem si vytvořil dva jednoduché programy v Pythonu, jeden sloužil jako TCP klient a druhý jako TCP server. Tyto programy jsem spustil a zachytil jejich komunikaci pomocí nástroje Wireshark, kterou jsem ukládal do PCAP souborů. Jejich implementace je dostupná v adresáři \texttt{tests/}, PCAP soubory v \texttt{tests/pcaps}. Implementoval jsem taktéž jednoduchý testovací skript \texttt{tests/test.py} v Pythonu, který obsahuje mnou implemntovaný kolektor. Tento skript pouští můj exportér a kolektor, který následně zpracovává přijaté záznamy a ukládá je do logů v adresáří \texttt{tests/logs}. Takto jsem byl schopen jednoduše ověřovat obsah záznamů, které exportér posílá.
+Pro korektní testování bylo nutné obstarat si několik PCAP souborů. Pro testování základní funkčnosti exportéru jsem si vytvořil dva jednoduché programy v~Pythonu, jeden sloužil jako TCP klient a druhý jako TCP server. Tyto programy jsem spustil a zachytil jejich komunikaci pomocí nástroje Wireshark, kterou jsem ukládal do PCAP souborů. Jejich implementace je dostupná v~adresáři \texttt{tests/}, PCAP soubory v~\texttt{tests/pcaps}. Implementoval jsem taktéž jednoduchý testovací skript \texttt{tests/test.py} v~Pythonu, který obsahuje mnou implemntovaný kolektor. Tento skript pouští můj exportér a kolektor, který následně zpracovává přijaté záznamy a~ukládá je do logů v~adresáří \texttt{tests/logs}. Takto jsem byl schopen jednoduše ověřovat obsah záznamů, které exportér posílá.
 
-Logy z kolektoru jsou ve formátu JSON a obsahují dvě pole, \texttt{headers} a \texttt{records}. Pole \texttt{received} obsahuje hlavičky záznamů, které kolektor přijal, a pole \texttt{records} obsahuje samotné záznamy. Záznamy rovněž obsahují zpracovanou časovou značku, kdy byl záznam odeslán a délku trvání flowu, tyto hodnoty exportér neodesílá.
+Logy z~kolektoru jsou ve formátu JSON a obsahují dvě pole, \texttt{headers} a \texttt{records}. Pole \texttt{received} obsahuje hlavičky záznamů, které kolektor přijal, a pole \texttt{records} obsahuje samotné záznamy. Příklad jednotlivého logu je v~(\ref{lst1}). Záznamy rovněž obsahují zpracovanou časovou značku, kdy byl záznam odeslán a délku trvání toku, tyto hodnoty exportér neodesílá.
 
 % insert json example of log
-\begin{lstlisting}[language=json, caption={Ukázka logu z kolektoru}, label={lst1}]
+\begin{lstlisting}[language=json, caption={Ukázka logu z~kolektoru}, label={lst1}]
 {
     "headers": {
         "header_0": {
@@ -195,8 +203,10 @@ Logy z kolektoru jsou ve formátu JSON a obsahují dvě pole, \texttt{headers} a
 
 \end{lstlisting}
 
+Nejdůležitější testy implementované v~programu jsou testy na dobu trvání toků. Skript testuje podle nastaveného aktivního časového limitu, zda toky nepřesáhly tento časový limit. Program odečte hodnoty \texttt{Last} a \texttt{First} záznamu a porovná je s~časovým limitem. Pokud je rozdíl větší než časový limit, tak test selže, jelikož toky by neměly trvat déle než nastavený aktivní časový limit. Jejich implementace je dostupná ve funkci \texttt{run\_duration\_tests()}.
 
-Program rovněž obsahuje několik testů, které pouští jak můj exportér, tak referenční exportér \texttt{softflowd} a porovnává jejich výstupy. Tyto testy lze spustit pomocí příkazu \texttt{python test.py -c -r}. Vzhledem k tomu, že referenční exportér má jinou implementaci, není možné jej plnohodně porovnávat s naším zadáním. Softflowd například nedokáže měnit časové limity, když načítá pakety ze souboru, taktéž řeší TCP fin a reset flagy. To v našem našem exportéru není zadáno. Testy tedy spíš slouží k porovnání jen se soubory, které obsahují malé množství záznamů, kdy se výstupy téměř vždy shodují.
+Testovací skript rovněž obsahuje několik testů, které testují výstupy s~referenčním exportérem. Tyto testy lze spustit pomocí příkazu \texttt{python test.py -c -t --softflowd}. Vzhledem k~tomu, že referenční exportér má jinou implementaci, není možné jej plnohodně porovnávat s~naším zadáním. Softflowd například nedokáže měnit časové limity, když načítá pakety ze souboru, taktéž řeší TCP fin a reset flagy. To v~našem našem exportéru není zadáno. Testy tedy spíš slouží k~porovnání jen se soubory, které obsahují malé množství záznamů, kdy se výstupy téměř vždy shodují.
+\newpage
 
 \bibliography{citations}
 \bibliographystyle{czechiso}
