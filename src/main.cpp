@@ -25,6 +25,7 @@ int main(int argc, char *argv[]) {
     // Upon creation, the timer will calculate the current time to be used as the start time
     Timer timer(args.active_timeout, args.inactive_timeout);
 
+
     if (!exporter->connect()) {
         std::cerr << "Unable to connect to: " << args.hostname << ":" << args.port << std::endl;
         return EXIT_FAILURE;

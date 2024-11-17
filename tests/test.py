@@ -19,11 +19,14 @@ from functools import wraps
 
 CREATE_JSON = False
 RUN_TESTS = False
-RUN_SOFTFLOWD = True
+RUN_SOFTFLOWD = False
+RUN_DURATION_TEST = False
 
 
 EXPORTER_EXEC = "../p2nprobe"
 PCAP_DIR = Path("pcaps")
+ACTIVE = 60
+INACTIVE = 60
 
 stop_thread = False
 message_data = {}
@@ -33,12 +36,14 @@ total_success = 0
 def print_help():
     print(
     """
-Usage:
-python3 test.py [-c] [-r]
-
--c: Create JSON files with the exported data
--r: Run tests on the exported data
---no-softflowd: Do not run the softflowd exporter
+Usage: python3 test.py [OPTIONS]
+[OPTIONS]:
+-c               Create JSON files with the exported data
+-d | --duration  Run duration tests to test active duration of your flows
+-t | --test      Run tests on the exported data with softflowd (not reliable on bigger pcaps)
+--softflowd      Create JSON outputs with softflowd
+-a [ACTIVE]      Set active timeout in seconds
+-i [INACTIVE]    Set inactive timeout in seconds
     """)
 
 
@@ -133,7 +138,7 @@ def collector(host="127.0.0.1", port=9995):
     global stop_thread
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as udp_socket:
         udp_socket.bind((host, port))
-        udp_socket.settimeout(4.5)
+        udp_socket.settimeout(6.5)
         # print(f"\nListening for NetFlow v5 packets on {host}:{port}")
 
         message_count = 0
@@ -193,6 +198,10 @@ def log_failure(message):
     """Log a failure message to the console."""
     cprint(message, "red")
 
+def log_warning(message):
+    """Log a warning message to the console."""
+    cprint(message, "yellow")
+
 
 
 def run_collector():
@@ -205,7 +214,8 @@ def run_collector():
 def run_exporter(pcap_file):
     """Run your exporter to send data to the collector."""
     exporter_process = subprocess.Popen(
-        [f"{EXPORTER_EXEC}", "127.0.0.1:9995", str(pcap_file)], stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        [f"{EXPORTER_EXEC}", "127.0.0.1:9995", str(pcap_file), "-a" , f"{ACTIVE}", "-i", f"{INACTIVE}"], stdout=subprocess.PIPE, stderr=subprocess.PIPE
+
     )
     exporter_process.communicate()
 #
@@ -367,6 +377,36 @@ def check_flow_sequence_in_header(my_result_file, softflowd_result_file):
     log_success("SUCCESS")
 
 
+def check_max_duration(my_result_file):
+    global total_success
+    with open(my_result_file) as f1:
+        my_data = json.load(f1)
+
+
+    my_duration = [record for record in my_data["records"].items()]
+    for i, (hash, my_packet) in enumerate(my_duration):
+        duration = my_packet['Duration']
+        if duration > ACTIVE * 1000:
+            log_failure(f"\nhash: {hash}")
+            log_failure(f"Duration is greater than active timer duration at index {i}")
+            continue
+        elif duration == ACTIVE * 1000:
+            ## Not really an error, when rounding to milliseconds the duration can be equal to the active timer
+            ## Hard to test, use wireshark with the source PCAP to verify the actual duration
+            ## example:
+            ## active timeout: 10s
+            ## First packet:             2024-10-31 15:00:00.400000
+            ## Last good packet:         2024-10-31 15:00:10.3999000
+            ## Another packet (expired): 2024-10-31 15:00:10.400020 (expired by 20us)
+
+            ## depending on your implementation, when rounding to milliseconds the duration of the flow
+            ## would probably be still 10000ms
+            log_warning(f"\nhash: {hash}")
+            log_warning(f"Duration is equal to active timer duration at index {i}")
+    log_success("SUCCESS")
+    total_success += 1
+
+
 
 def create_output():
     global stop_thread
@@ -417,13 +457,10 @@ def run_tests():
     idx = 1
     num_of_tests = len(test_cases * len(my_output))
     
-    print("""
-
-
-    ****************************************
-    *           RUNNING TESTS              *
-    ****************************************
-    """)
+    print("\n\n")
+    print("****************************************")
+    print("*           RUNNING TESTS              *")
+    print("****************************************")
     for test_case in test_cases:
         for me_file, soft_file in zip(sorted(my_output), sorted(soft_output)):
             print("-" * 30)
@@ -438,27 +475,68 @@ def run_tests():
     print(colored(f"\n\nTotal successful tests: {total_success}/{num_of_tests}", "light_magenta"))
 
 
+def run_duration_tests():
+    """
+    Run duration tests on your outputs, checks if the duration of each flow is within the active timer
+    """
+    log_files = Path("logs")
+    my_output = [file for file in log_files.glob("*.json") if "myOut" in file.stem]
+
+    idx = 1
+    num_of_tests = len(my_output)
+    
+    print("\n\n")
+    print("****************************************")
+    print("*           RUNNING TESTS              *")
+    print("****************************************")
+    for file in my_output:
+        print("-" * 30)
+        print(colored(f"\nTEST CASE {idx}/{num_of_tests}", "cyan"))
+        print(f"Test files: {file}")
+
+        print(colored(f"\nRunning test: check_max_duration", "yellow"))
+        check_max_duration(file)
+        idx += 1
+        # time.sleep(0.01)
+
+    print(colored(f"\n\nTotal successful tests: {total_success}/{num_of_tests}", "light_magenta"))
+
 def main():
 
-    global CREATE_JSON
-    global RUN_TESTS
     create_output() if CREATE_JSON else True
     run_tests() if (RUN_TESTS and RUN_SOFTFLOWD) else True
+    run_duration_tests() if RUN_DURATION_TEST else True
 
 
 
     
 
 if __name__ == "__main__":
+
+    # create outputs inside ./logs directory
     if "-c" in sys.argv:
         CREATE_JSON = True
-    if "-r" in sys.argv:
+
+    # run tests compared to the softflowd outputs, not really reliable
+    if "-t" in sys.argv or "--test" in sys.argv:
         RUN_TESTS = True
+
+    # run duration tests only on your outputs, checks active duration
+    if "-d" in sys.argv or "--duration" in sys.argv:
+        RUN_DURATION_TEST = True
 
     if "-h" in sys.argv or "--help" in sys.argv:
         print_help()
         exit(0)
 
-    if "--no-softflowd" in sys.argv:
-        RUN_SOFTFLOWD = False
+    # set active timer
+    if "-a" in sys.argv:
+        ACTIVE = int(sys.argv[sys.argv.index("-a")+1])
+
+    # set inactive timer
+    if "-i" in sys.argv:
+        INACTIVE = int(sys.argv[sys.argv.index("-i")+1])
+
+    if "--softflowd" in sys.argv:
+        RUN_SOFTFLOWD = True
     main()

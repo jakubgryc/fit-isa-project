@@ -80,7 +80,7 @@ class FlowCache {
      *
      * @param flow current flow
      */
-    void prepareToExport(std::shared_ptr<Flow> flow);
+    void prepareToExport(const std::shared_ptr<Flow> &flow);
 
     /**
      * @brief returns the key of the flow from the source and destination IPs and ports

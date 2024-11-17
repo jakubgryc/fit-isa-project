@@ -96,7 +96,6 @@ bool UDPExporter::sendFlows(std::queue<NetflowRecord> &exportCache, Timer &timer
             sendto(sockfd, buffer, totalSize, 0, (struct sockaddr *)(&server_address), sizeof(server_address));
 
         if (bytes_tx < 0) {
-            std::cerr << "error: failed to send data\n";
         }
 
         flowSequence += totalFlows;
